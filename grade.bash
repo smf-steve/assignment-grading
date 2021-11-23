@@ -61,6 +61,7 @@ source ${ASSIGNMENT_ENV}
 # grade_start must be called at the top-level directory of a particular assignment
 function grade_start () {
   CLASSROOM_DIR="${PWD}/.."
+  GRADING_SCRIPT="${CLASSROOM_DIR}/grade.bash" 
   source ${GRADING_SCRIPT}
 
   # If there is a per-assignment assignment.env file, allow that one to override the default
@@ -71,9 +72,9 @@ function grade_start () {
 }
 
 # Convention Related Files
-CLASS_ROSTER="${CLASS_DIR}/roster"                  # List of github usernames of each student
+CLASS_ROSTER="${CLASSROOM_DIR}/roster"                  # List of github usernames of each student
    # Modify the class roster to include: username <e.g. email address>
-CLASS_GRADE_REPORT="${CLASS_DIR}/grades.${ASSIGNMENT_NAME}"
+CLASS_GRADE_REPORT="${CLASSROOM_DIR}/grades.${ASSIGNMENT_NAME}"
 SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
 
 # Assignment Based Files
@@ -83,11 +84,8 @@ ANSWER_FILE="${ASSIGNMENT_DIR}/answers.md"        # To be added to the student's
 RUBRIC_FILE="${ASSIGNMENT_DIR}/rubric.grading"
 STUDENT_GRADE_REPORT="grade.report"
 
-
-
 # Define the name of the terminal for interactive input and output
 terminal=$(tty)
-
 
 # Grading Method: visual review of a .md file
 #   - for each line in the rubric.grading file
@@ -101,10 +99,10 @@ function grade_submission () {
     cd $_dir  
     rm -f ${STUDENT_GRADE_REPORT}
 
-    _files="${STUDENT_ASSIGNMENT}"
+    _files="${SUBMISSION_FILE}"
     if [[ $ANSWER_TAG ]] ; then
-      grep ${ANSWER_TAG} "${STUDENT_ASSIGNMENT}" > ${STUDENT_ASSIGNMENT}.txt
-      _files="$_files ${STUDENT_ASSIGNMENT}.txt"
+      grep -e "${ANSWER_TAG}" "${SUBMISSION_FILE}" > ${SUBMISSION_FILE}.txt
+      _files="$_files ${SUBMISSION_FILE}.txt"
     fi
     ${LAUNCH_COMMAND} "${GRADING_EDITOR}" ${_files}
 
@@ -112,7 +110,7 @@ function grade_submission () {
     # Add the grad.report prologue
     echo "Grading $_user" > $terminal
     { 
-      echo '# Grading summary for ${ASSIGNMENT_NAME} Assignment'
+      echo "# Grading summary for ${ASSIGNMENT_NAME} Assignment"
       echo 
     }  >> ${STUDENT_GRADE_REPORT}
   
@@ -153,7 +151,7 @@ function reset_grading () {
 
 
 function clone_submission () {
-   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_PREFIX}-${1}"
+   _dir="${SUBMISSION_DIR}"
 
    mkdir -p "$_dir"
    git -C ${_dir} clone ${REPO_PREFIX}/${ASSIGNMENT_PREFIX}-${_user}.git 
@@ -189,7 +187,7 @@ function publish_grade () {
 }
 function publish_grades () {
   while read _user  ; do
-    public_grade $_user
+    publish_grade $_user
   done < ${CLASS_ROSTER}
 }  
 
