@@ -51,7 +51,6 @@ fi
 GRADING_SCRIPT="${CLASSROOM_DIR}/grade.bash"  # This is the name of this particular script 
 CLASSROOM_ENV="${CLASSROOM_DIR}/grading.env"
 source ${CLASSROOM_ENV}
-source ${ASSIGNMENT_ENV}
 
 GITHUB_PREFIX="git@github.com:${GITHUB_ORG}"
 STUDENT_BASE_URL=${GITHUB_PREFIX}/${ASSIGNMENT_NAME}
@@ -152,7 +151,7 @@ function clone_submission () {
    _dir="${SUBMISSION_DIR}"
 
    mkdir -p "$_dir"
-   git -C ${_dir} clone ${STUDENT_BASE_URL}-${_user}.git 
+   git -C ${_dir} clone ${STUDENT_BASE_URL}-${1}.git 
 }
 function clone_submissions () {
   while read _user ; do
