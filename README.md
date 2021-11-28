@@ -1,6 +1,6 @@
 # Class Assignments and Grading Support
 
-> See [Installation, Assignment, and Grading Process]() for further instructions
+> See [Installation, Assignment, and Grading Process](https://github.com/smf-steve/assignment-grading/blob/main/process.md) for further instructions
 
 ## Summary:
 Students within Computer Science and Computer Information Technology programs are better served if they learn and utilize source control systems early in their academic program. Learning various markdown languages, which are used to document they software projects, is also advantages.
