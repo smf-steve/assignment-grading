@@ -58,6 +58,7 @@ ASSIGNMENT_ENV="${CLASSROOM_DIR}/default-assignment.env"
 source ${CLASSROOM_ENV}
 source ${ASSIGNMENT_ENV}
 
+GITHUB_PREFIX="git@github.com:${GITHUB_ORG}"
 REPO_PREFIX=${ASSIGNMENT_NAME}
 if [ -n ${ASSIGNMENT_PREFIX} ] ; then 
   REPO_PREFIX="${ASSIGNMENT_PREFIX}-${REPO_PREFIX}"
@@ -159,7 +160,7 @@ function clone_submission () {
    _dir="${SUBMISSION_DIR}"
 
    mkdir -p "$_dir"
-   git -C ${_dir} clone ${REPO_PREFIX}/${REPO_PREFIX}-${_user}.git 
+   git -C ${_dir} clone ${GITHUB_PREFIX}/${REPO_PREFIX}-${_user}.git 
 }
 function clone_submissions () {
   while read _user ; do
