@@ -13,38 +13,34 @@
 
 
 ################################################################################################
-# Classroom Setup Process
-#   - create a github organization
-#   - create a github classroom
-#   - install this repository
-#   - updated the classroom.env file
-#   - source grade.bash <class-directory>
-
-# Assignment Grading Setup Process
-#   - publish via github classroom the assignment with the name "<assignment-name>"
-#   - git clone the template assignment which has the name "<assignment-name>"
+# Processes:
+#
+# New Assignment:
+#   - clone the assignment's template repository to <assignment-prefix>
 #   - cd "<assignment-name>"
-#   - create an "assignment.env" file to override the defaults (optional)
+#   - create an "grading.env" file to override the defaults (optional)
 #   - create the answers.md file
 #   - create the rubric.grading file
-
-# Per Assignment Grading Process
+#
+# Grading Process
 #   - cd "<assignment-name>"
+#   - source ../grade.bash ..
 #   - grade_start
 #   - reset_grading (optional)
 #   - clone_submissions
+#   - pull_submssions
 #   - grade_submissions
 #   - publish_grades
 #   * record the grades: "insert grades.<assignment>" into the master spreadsheet
 
 # Assignment re-grading of single student process
 #   - cd "<assignment-name>"
-#   - source grade_start
+#   - source ../grade_start ..
+#   - grade_start
 #   - pull_submission "<account>"
 #   - grade_submission "<account>"
-#   - post_submission "<account>"
+#   - publish_submission "<account>"
 #   * update the individual grade within the master spreadsheet
-
 #
 #############################################################
 
@@ -53,16 +49,12 @@ if [[ -z ${CLASSROOM_DIR} ]] ; then
 fi
 
 GRADING_SCRIPT="${CLASSROOM_DIR}/grade.bash"  # This is the name of this particular script 
-CLASSROOM_ENV="${CLASSROOM_DIR}/classroom.env"
-ASSIGNMENT_ENV="${CLASSROOM_DIR}/default-assignment.env"
+CLASSROOM_ENV="${CLASSROOM_DIR}/grading.env"
 source ${CLASSROOM_ENV}
 source ${ASSIGNMENT_ENV}
 
 GITHUB_PREFIX="git@github.com:${GITHUB_ORG}"
-REPO_PREFIX=${ASSIGNMENT_NAME}
-if [ -n ${ASSIGNMENT_PREFIX} ] ; then 
-  REPO_PREFIX="${ASSIGNMENT_PREFIX}-${REPO_PREFIX}"
-fi
+STUDENT_BASE_URL=${GITHUB_PREFIX}/${ASSIGNMENT_NAME}
 
 # grade_start must be called at the top-level directory of a particular assignment
 function grade_start () {
@@ -70,9 +62,9 @@ function grade_start () {
   GRADING_SCRIPT="${CLASSROOM_DIR}/grade.bash" 
   source ${GRADING_SCRIPT}
 
-  # If there is a per-assignment assignment.env file, allow that one to override the default
-  if [[ -f "${ASSIGNMENT_DIR}/assignment.env" ]] ; then
-    ASSIGNMENT_ENV="${ASSIGNMENT_DIR}/assignment.env"
+  # If there is a per-assignment grading.env file, override the class defaults
+  if [[ -f "${ASSIGNMENT_DIR}/grading.env" ]] ; then
+    ASSIGNMENT_ENV="${ASSIGNMENT_DIR}/grading.env"
     source ${ASSIGNMENT_ENV}
   fi
 }
@@ -99,7 +91,7 @@ terminal=$(tty)
 #   - a grade report is created, with the total points tallied
 #   - summary information is provided   
 function grade_submission () {
-  _dir="${SUBMISSION_DIR}/${REPO_PREFIX}-${1}"
+  _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${1}"
 
   (
     cd $_dir  
@@ -160,7 +152,7 @@ function clone_submission () {
    _dir="${SUBMISSION_DIR}"
 
    mkdir -p "$_dir"
-   git -C ${_dir} clone ${GITHUB_PREFIX}/${REPO_PREFIX}-${_user}.git 
+   git -C ${_dir} clone ${STUDENT_BASE_URL}-${_user}.git 
 }
 function clone_submissions () {
   while read _user ; do
@@ -170,7 +162,7 @@ function clone_submissions () {
 
 
 function pull_submission () {
-   _dir=${SUBMISSION_DIR}/${REPO_PREFIX}-${1}/
+   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${1}/
    git -C ${_dir} pull
 }
 function pull_submissions () {
@@ -180,7 +172,7 @@ function pull_submissions () {
 }  
 
 function publish_grade () {
-  _dir=${SUBMISSION_DIR}/${REPO_PREFIX}-${1}/
+  _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${1}/
 
   if [[ -f {ANSWER_FILE} ]] ; then
     cp ${ANSWER_FILE} ${_dir}/.
