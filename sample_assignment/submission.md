@@ -9,7 +9,7 @@
    *  5/12/22                                      <!-- answer -->
   
  
-1. Provide the text for the preambe of the US consitituion:
+1. Provide the text for the preamble of the US Constitution:
    * Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
                    <!-- answer -->
 
@@ -27,7 +27,7 @@
 1. Enumerate and briefly describe the steps performed to execution an instruction:
   1. Start: Read the next instruction from memory.                                     <!-- answer -->
   1. Write: The instruction is decode to enable the inputs needed for execution.       <!-- answer -->
-  1. Done: The CPU is activitate to perform the desire desired action                  <!-- answer -->
+  1. Done: The CPU is activated to perform the desire desired action                  <!-- answer -->
   1.                                                                                   <!-- answer -->
   1.                                                                                   <!-- answer -->
   <!-- Feel free to add or remove additional answer lines as needed. -->

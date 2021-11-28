@@ -9,7 +9,7 @@
    *                                                                     <!-- answer -->
 
  
-1. Provide the text for the preambe of the US consitituion:
+1. Provide the text for the preamble of the US Constitution:
    *                                                                     <!-- answer -->
 
 ### Section Two
