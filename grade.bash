@@ -108,7 +108,7 @@ function grade_submission () {
     # Add the grad.report prologue
     echo "Grading $_user" > $terminal
     { 
-      echo "# Grading summary for ${ASSIGNMENT_NAME} Assignment"
+      echo "# Grading summary for \"${ASSIGNMENT_NAME}\" assignment"
       echo 
     }  >> ${STUDENT_GRADE_REPORT}
   
