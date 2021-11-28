@@ -58,6 +58,11 @@ ASSIGNMENT_ENV="${CLASSROOM_DIR}/default-assignment.env"
 source ${CLASSROOM_ENV}
 source ${ASSIGNMENT_ENV}
 
+REPO_PREFIX=${ASSIGNMENT_NAME}
+if [ -n ${ASSIGNMENT_PREFIX} ] ; then 
+  REPO_PREFIX="${ASSIGNMENT_PREFIX}-${REPO_PREFIX}"
+fi
+
 # grade_start must be called at the top-level directory of a particular assignment
 function grade_start () {
   CLASSROOM_DIR="${PWD}/.."
@@ -93,7 +98,7 @@ terminal=$(tty)
 #   - a grade report is created, with the total points tallied
 #   - summary information is provided   
 function grade_submission () {
-  _dir="${SUBMISSION_DIR}/${ASSIGNMENT_PREFIX}-${1}"
+  _dir="${SUBMISSION_DIR}/${REPO_PREFIX}-${1}"
 
   (
     cd $_dir  
@@ -154,7 +159,7 @@ function clone_submission () {
    _dir="${SUBMISSION_DIR}"
 
    mkdir -p "$_dir"
-   git -C ${_dir} clone ${REPO_PREFIX}/${ASSIGNMENT_PREFIX}-${_user}.git 
+   git -C ${_dir} clone ${REPO_PREFIX}/${REPO_PREFIX}-${_user}.git 
 }
 function clone_submissions () {
   while read _user ; do
@@ -164,7 +169,7 @@ function clone_submissions () {
 
 
 function pull_submission () {
-   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_PREFIX}-${1}/
+   _dir=${SUBMISSION_DIR}/${REPO_PREFIX}-${1}/
    git -C ${_dir} pull
 }
 function pull_submissions () {
@@ -174,7 +179,7 @@ function pull_submissions () {
 }  
 
 function publish_grade () {
-  _dir=${SUBMISSION_DIR}/${ASSIGNMENT_PREFIX}-${1}/
+  _dir=${SUBMISSION_DIR}/${REPO_PREFIX}-${1}/
 
   if [[ -f {ANSWER_FILE} ]] ; then
     cp ${ANSWER_FILE} ${_dir}/.
