@@ -20,7 +20,7 @@
 #   - cd "<assignment-name>"
 #   - create an "grading.env" file to override the defaults (optional)
 #   - create the answers.md file
-#   - create the rubric.grading file
+#   - create the grading_rubric file
 #
 # Grading Process
 #   - cd "<assignment-name>"
@@ -78,19 +78,20 @@ SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
 ASSIGNMENT_FILE="assignment.md"                   # Contained within the student's repo
 SUBMISSION_FILE="submission.md"                   # Contained within the student's repo
 ANSWER_FILE="${ASSIGNMENT_DIR}/answers.md"        # To be added to the student's repo
-RUBRIC_FILE="${ASSIGNMENT_DIR}/rubric.grading"
+RUBRIC_FILE="${ASSIGNMENT_DIR}/grading_rubric"
 STUDENT_GRADE_REPORT="grade.report"
 
 # Define the name of the terminal for interactive input and output
 terminal=$(tty)
 
 # Grading Method: visual review of a .md file
-#   - for each line in the rubric.grading file
+#   - for each line in the grading_rubric file
 #     - the prof is prompted for a score followed by an optional comment
 #   - a grade report is created, with the total points tallied
 #   - summary information is provided   
 function grade_submission () {
-  _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${1}"
+  _user=${1}
+  _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_user}"
 
   (
     cd $_dir  
@@ -112,12 +113,12 @@ function grade_submission () {
     }  >> ${STUDENT_GRADE_REPORT}
   
     # For each line in the rubric
-    cat ${RUBRIC_FILE} | while read _line ; do
+    while read _line ; do
       echo $_line          > $terminal
       read _value _comment < $terminal
       printf "  $_value Points:\t\t$_line: $_comment\n"
       (( _score += _value ))
-    done >> ${STUDENT_GRADE_REPORT}
+    done < ${RUBRIC_FILE} >> ${STUDENT_GRADE_REPORT}
 
     # Add the grade.report epilogue
     {
