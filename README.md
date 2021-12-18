@@ -48,7 +48,7 @@ As a consequence of installing and using this repository, the following file str
       * ``README.md``: general instructions on the submission process
       * ``assignment.md``: the original assignment
       * ``answers.md``: the official answers to assignment
-      * ``rubric.grading``: defined grading rubric
+      * ``grading_grading``: defined grading rubric
       * ``submissions``: directory for all student submissions
         * ``01-assignment-student-id``
           * README.md
