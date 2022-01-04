@@ -3,7 +3,7 @@
 > See [Installation, Assignment, and Grading Process](https://github.com/smf-steve/assignment-grading/blob/main/process.md) for further instructions
 
 ## Summary:
-Students within Computer Science and Computer Information Technology programs are better served if they learn and utilize source control systems early in their academic program. Learning various markdown languages, which are used to document they software projects, is also advantages.
+Students within Computer Science and Computer Information Technology programs are better served if they learn and utilize source control systems early in their academic program. Learning various markdown languages, which are used to document their software projects, is also advantages.
 
 A such, I decided to use GitHub Classrooms for all of my paper-like assignments, which includes quizzes and exams. While using a traditional LMS (Learning Management System) might be a better fit such activities, there is little long-term benefit to my students in become proficient users of an LMS. My approach to using [Github Classrooms](https://classroom.github.com) for paper-like submissions allows me to introduce git and the markdown format to the students early in their academic program. As they progress through the academic program, they can further enhance their knowledge of the utility of source control systems, etc.
 
