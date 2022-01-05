@@ -13,15 +13,17 @@
   1. Incrementally edit and submit your "submission.md" file
      - ``git add``, ``git commit``, and ``git push``
      - get into the habit of making incremental updates to your working assignments.
-  2. Your answers need to be positioned in the file correctly.
-     - provide an answer to every line that contains an "answer" HTML comment.
-     - placement of your answer needs to be to the left of the "answer" HTML comment.
-  3. Use additional spacing to ensure your answer is _easy_ to read.
-  4. Add additional information as you feel is necessary.
+  2. Provide a response to all items that have been marked as needing a response.
+     - an HTML comment tag ``<!-- response -->`` have been added to each line that requires a response.
+     - your response should be placed to the left of the HTML comment.
+  3. Use additional spacing to ensure your responses are _easy_ to read to maximize credit.
+  4. Add additional information as you feel is necessary to maximize credit.
+  5. Don't forget to do a final ``git push`` to make your final submission
+     - You can view your answers.md file online to review your final formatted submission 
 
 ## Grading
    1. An automated process will be used to expedite the grading of this assignment. 
-   2. As such, it is important that you position your answers appropriately. 
+   2. As such, it is important that you position your responses appropriately. 
    3. A file called "answers.md" will be provided to you with all the correct answers.
    4. A file called "grade.report" will be provided with your final score and any breakdown.
 

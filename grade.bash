@@ -5,7 +5,7 @@
 
 # These assignments are presumed to be paper-like assignments within a text file.
 # Hence, a visual review of each SUBMISSION_FILE is needed.  It is also presumed that
-# each line that contains an answer includes the ANSWER_TAG that allows for
+# each line that contains an answer includes the RESPONSE_TAG that allows for
 # the collection of just the answers via a simple 'grep' of the SUBMISSION_FILE.
 
 # The appropriate file is opened for visual review, and then, via the CLI, the professor is 
@@ -98,8 +98,8 @@ function grade_submission () {
     rm -f ${STUDENT_GRADE_REPORT}
 
     _files="${SUBMISSION_FILE}"
-    if [[ $ANSWER_TAG ]] ; then
-      grep -e "${ANSWER_TAG}" "${SUBMISSION_FILE}" > ${SUBMISSION_FILE}.txt
+    if [[ $RESPONSE_TAG ]] ; then
+      grep -e "${RESPONSE_TAG}" "${SUBMISSION_FILE}" > ${SUBMISSION_FILE}.txt
       _files="$_files ${SUBMISSION_FILE}.txt"
     fi
     ${LAUNCH_COMMAND} "${GRADING_EDITOR}" ${_files}
