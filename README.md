@@ -33,12 +33,16 @@ As part of the grading process the following files will be added to the students
 
 
 ## Class File Structure
-As a consequence of installing and using this repository, the following file structure will be created:
-  * assignment_grading: (this_directory)
-    * ``sample_assignment``: 
-      - a directory that contains a sample assignment
+As a consequence of installing and install this repository, the following file structure will be created:
+  * assignment_grading: (this directory)
     * README.md: this file 
     * grade.bash: a bash script that supports grading of paper-like assignments
+    * ``sample_assignment``: 
+      - a directory that contains a sample assignment
+
+
+As a consequence of grading a set of assignments, the following file structure will be added:
+  * assignment_grading: (this directory)
     * roster: a text file that contains a list of student's git accounts 
     * ``grades.01-assignment``
     * ``grades.02-assignment``

@@ -18,17 +18,19 @@ The following example shows how I installed the software for my COMP122 class.
      git clone git@github.com:smf-steve/assignment-grading.git
      cd assignment-grading   # ${CLASSROOM_DIR}
      ```
-  1. Update the grading.env file to provide information about the GitHub Classroom.
+  1. Update the .grading.env file to provide information about the GitHub Classroom.
      ```
      GITHUB_ORG="CIT122"
      CLASSROOM_URL="https://classroom.github.com/classrooms/59349295-comp122-f21"
      ```
   1. Create a text file, called roster, that contains a list of all of the student's Github Accounts.
-
+     ```
+     cat >> roster
+     ```
 
 ## Assignment Creation Process
   1. Create an assignment with you GitHub Organization (${GITHUB_ORG})
-  1. Add, at least, the following files to the repository
+  1. Add, at least, the following files to that repository
      - README.md
      - assignment.md
   1. Modify this assignment to be template directory
@@ -36,8 +38,8 @@ The following example shows how I installed the software for my COMP122 class.
      - recommend using a two-digit naming scheme for the assignment prefix
   1. Distribute the assignment invitation to your students
 
-## Grading and Review Process:
- 1. Clone this assignment template repository into the appropriate directory
+## Assignment Setup Process:
+ 1. Clone the assignment's template repository into the appropriate directory
     - The name of the directory must match the GitHub Classroom assignment prefix
      ```
      cd ~/comp122/private/assignment-grading
@@ -47,7 +49,10 @@ The following example shows how I installed the software for my COMP122 class.
   1. Create the ``./grading.env`` to override defaults (optional)
   1. Create a grading rubric: ``./grading_rubric``
   1. Create the answer key: ``./answers.md``
-  1. Execute: ``source ../grade.bash ..``
+
+## Grading and Review Process
+  1. Change your current working directory to be the assignment directory: ``cd 01-assignment``
+  1. Execute: ``source ../bin/grade.bash``   
   1. Execute various CLI commands within the assignment directory
      1. ``grade_start``: to start the grading process, which reasserts the environment variables
      1. ``clone_submissions``: to obtain a copy of all the student's files
@@ -57,7 +62,6 @@ The following example shows how I installed the software for my COMP122 class.
   1. Review class grades contained within ``../grades.01-assignment``
 
 ## Regrading a Single Student's Submission
-
   1. ``cd 01-assignment``
   1. ``grade_start``: to start the grading process, which reasserts tenvironment variables
   1. ``clone_submission student``: to obtain a copy of the student's files
