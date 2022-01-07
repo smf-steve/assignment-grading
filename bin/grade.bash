@@ -44,42 +44,50 @@
 #
 #############################################################
 
-if [[ -z ${CLASSROOM_DIR} ]] ; then
-  CLASSROOM_DIR=$1
+## Usage: 
+##    source $path/bin/grade.bash CLASSROOM_DIR
+##      - CLASSROOM_DIR is set as defined
+##    source $path/bin/grade.bash
+##      - If CLASSROOM_DIR is unset, then set it to pwd
+
+# Normalize the file path
+if [[ -n $1 ]] ; then
+  [[ -d $1 ]] && CLASSROOM_DIR=$( cd $1 ; pwd )
 fi
+[[ -z ${CLASSROOM_DIR} ]] && CLASSROOM_DIR=$(pwd)
 
-GRADING_SCRIPT="${CLASSROOM_DIR}/grade.bash"  # This is the name of this particular script 
-CLASSROOM_ENV="${CLASSROOM_DIR}/grading.env"
+
+GRADING_SCRIPT="${CLASSROOM_DIR}/bin/grade.bash"  # This is the name of this particular script 
+CLASSROOM_ENV="${CLASSROOM_DIR}/.grading.env"
 source ${CLASSROOM_ENV}
-
-GITHUB_PREFIX="git@github.com:${GITHUB_ORG}"
-STUDENT_BASE_URL=${GITHUB_PREFIX}/${ASSIGNMENT_NAME}
 
 # grade_start must be called at the top-level directory of a particular assignment
 function grade_start () {
-  CLASSROOM_DIR="${PWD}/.."
-  GRADING_SCRIPT="${CLASSROOM_DIR}/grade.bash" 
-  source ${GRADING_SCRIPT}
+  # CLASSROOM_DIR="${PWD}/.."
+  # GRADING_SCRIPT="${CLASSROOM_DIR}/bin/grade.bash" 
+  # source ${GRADING_SCRIPT}
+  source ${CLASSROOM_ENV}
 
   # If there is a per-assignment grading.env file, override the class defaults
   if [[ -f "${ASSIGNMENT_DIR}/grading.env" ]] ; then
     ASSIGNMENT_ENV="${ASSIGNMENT_DIR}/grading.env"
     source ${ASSIGNMENT_ENV}
   fi
+
+  GITHUB_PREFIX="git@github.com:${GITHUB_ORG}"
+  STUDENT_BASE_URL=${GITHUB_PREFIX}/${ASSIGNMENT_NAME}
+  CLASS_ROSTER="${CLASSROOM_DIR}/roster"                  # List of github usernames of each student
+  CLASS_GRADE_REPORT="${CLASSROOM_DIR}/grades.${ASSIGNMENT_NAME}"
 }
 
-# Convention Related Files
-CLASS_ROSTER="${CLASSROOM_DIR}/roster"                  # List of github usernames of each student
-   # Modify the class roster to include: username <e.g. email address>
-CLASS_GRADE_REPORT="${CLASSROOM_DIR}/grades.${ASSIGNMENT_NAME}"
+# Assignment Based Files
 SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
 
-# Assignment Based Files
 ASSIGNMENT_FILE="assignment.md"                   # Contained within the student's repo
 SUBMISSION_FILE="submission.md"                   # Contained within the student's repo
 ANSWER_FILE="${ASSIGNMENT_DIR}/answers.md"        # To be added to the student's repo
-RUBRIC_FILE="${ASSIGNMENT_DIR}/grading_rubric"
-STUDENT_GRADE_REPORT="grade.report"
+RUBRIC_FILE="${ASSIGNMENT_DIR}/grading_rubric"    
+STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
 
 # Define the name of the terminal for interactive input and output
 terminal=$(tty)

@@ -13,8 +13,8 @@ This software package and it's define file structure has been designed to suppor
 The following example shows how I installed the software for my COMP122 class.
   1. Install this software package.
      ```
-     mkdir -p ~/comp122/private
-     cd ~/comp122/private
+     mkdir -p ~/comp122/deliverables
+     cd ~/comp122/deliverables
      git clone git@github.com:smf-steve/assignment-grading.git
      cd assignment-grading   # ${CLASSROOM_DIR}
      ```
@@ -42,7 +42,7 @@ The following example shows how I installed the software for my COMP122 class.
  1. Clone the assignment's template repository into the appropriate directory
     - The name of the directory must match the GitHub Classroom assignment prefix
      ```
-     cd ~/comp122/private/assignment-grading
+     cd ~/comp122/deliverables
      git clone git@github.com:smf-steve/COMP122/assignment.git 01-assignment
      cd 01-assignment
      ```
@@ -52,7 +52,8 @@ The following example shows how I installed the software for my COMP122 class.
 
 ## Grading and Review Process
   1. Change your current working directory to be the assignment directory: ``cd 01-assignment``
-  1. Execute: ``source ../bin/grade.bash``   
+  1. Execute: ``source ../bin/grade.bash CLASSROOM_DIR``   
+     - if no argument then the current working directory is to be the CLASSROOM_DIR
   1. Execute various CLI commands within the assignment directory
      1. ``grade_start``: to start the grading process, which reasserts the environment variables
      1. ``clone_submissions``: to obtain a copy of all the student's files
