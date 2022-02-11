@@ -43,7 +43,7 @@ The following example shows how I installed the software for my COMP122 class.
     - The name of the directory must match the GitHub Classroom assignment prefix
      ```
      cd ~/comp122/deliverables
-     git clone git@github.com:smf-steve/COMP122/assignment.git 01-assignment
+     git clone git@github.com:COMP122/assignment.git 01-assignment
      cd 01-assignment
      ```
   1. Create the ``./grading.env`` to override defaults (optional)
