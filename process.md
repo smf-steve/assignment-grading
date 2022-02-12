@@ -52,7 +52,9 @@ The following example shows how I installed the software for my COMP122 class.
 
 ## Grading and Review Process
   1. Change your current working directory to be the assignment directory: ``cd 01-assignment``
-  1. Execute: ``source ../bin/grade.bash CLASSROOM_DIR``   
+  1. Source the grade.bash file:
+     - ``source bin/grade.bash .``
+     - ``source ../bin/grade.bash ..``  
      - if no argument then the current working directory is to be the CLASSROOM_DIR
   1. Execute various CLI commands within the assignment directory
      1. ``grade_start``: to start the grading process, which reasserts the environment variables
