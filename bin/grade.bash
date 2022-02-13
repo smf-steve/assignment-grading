@@ -92,7 +92,10 @@ STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's
 # Define the name of the terminal for interactive input and output
 terminal=$(tty)
 
-# Grading Method: visual review of a .md file
+# Grading Method: 
+#   1. Paper Based:  visual review of a .md file
+#   2. Code Based:  use of assignment-based makefile
+
 #   - for each line in the grading_rubric file
 #     - the prof is prompted for a score followed by an optional comment
 #   - a grade report is created, with the total points tallied
@@ -101,17 +104,31 @@ function grade_submission () {
   _user=${1}
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_user}"
 
+  if [[ ! -f ${RUBRIC_FILE} ]] ; then
+     echo "Rubric File Not Found: \"${RUBRIC_FILE}\""
+     return 1
+  fi
   (
-    cd $_dir  
-    rm -f ${STUDENT_GRADE_REPORT}
-
-    _files="${SUBMISSION_FILE}"
-    if [[ $RESPONSE_TAG ]] ; then
-      grep -e "${RESPONSE_TAG}" "${SUBMISSION_FILE}" > ${SUBMISSION_FILE}.txt
-      _files="$_files ${SUBMISSION_FILE}.txt"
+    echo "--------------" > $terminal
+    echo "Grading $_user" > $terminal
+    cd $_dir
+    if [[ -f ${ASSIGNMENT_DIR}/makefile ]] ; then
+       make -f ${ASSIGNMENT_DIR}/makefile
+    else
+       # Assume it is a paper submission
+       #rm -f ${STUDENT_GRADE_REPORT}
+   
+       #_files="${SUBMISSION_FILE}"
+       #if [[ $RESPONSE_TAG ]] ; then
+       #  grep -e "${RESPONSE_TAG}" "${SUBMISSION_FILE}" > ${SUBMISSION_FILE}.txt
+       #  _files="$_files ${SUBMISSION_FILE}.txt"
+       #fi
+       #${LAUNCH_COMMAND} "${GRADING_EDITOR}" ${_files}
+       make -f ${CLASSROOM_DIR}/makefile paper_grade
     fi
-    ${LAUNCH_COMMAND} "${GRADING_EDITOR}" ${_files}
 
+    # Prompt the Professor for the stuff required for the grading rubric
+    rm -f ${STUDENT_GRADE_REPORT}
     _score=0
     # Add the grad.report prologue
     echo "Grading $_user" > $terminal
@@ -161,6 +178,8 @@ function clone_submission () {
 
    mkdir -p "$_dir"
    git -C ${_dir} clone ${STUDENT_BASE_URL}-${1}.git 
+   # Note that if there is no submission for a student,
+   # Subsequent operations that create files are in error
 }
 function clone_submissions () {
   while read _user ; do
