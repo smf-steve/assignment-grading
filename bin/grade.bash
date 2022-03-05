@@ -77,17 +77,20 @@ function grade_start () {
   GITHUB_PREFIX="git@github.com:${GITHUB_ORG}"
   STUDENT_BASE_URL=${GITHUB_PREFIX}/${ASSIGNMENT_NAME}
   CLASS_ROSTER="${CLASSROOM_DIR}/roster"                  # List of github usernames of each student
+
+  # Assignment Based Files
   CLASS_GRADE_REPORT="${CLASSROOM_DIR}/grades.${ASSIGNMENT_NAME}"
+  SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
+  ANSWER_FILE="${ASSIGNMENT_DIR}/answers.md"        # To be added to the student's repo
+  RUBRIC_FILE="${ASSIGNMENT_DIR}/grading_rubric"    
+
 }
 
-# Assignment Based Files
-SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
-
+# Student Related Files
 ASSIGNMENT_FILE="assignment.md"                   # Contained within the student's repo
 SUBMISSION_FILE="submission.md"                   # Contained within the student's repo
-ANSWER_FILE="${ASSIGNMENT_DIR}/answers.md"        # To be added to the student's repo
-RUBRIC_FILE="${ASSIGNMENT_DIR}/grading_rubric"    
 STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
+
 
 # Define the name of the terminal for interactive input and output
 terminal=$(tty)
@@ -111,6 +114,12 @@ function grade_submission () {
   (
     echo "--------------" > $terminal
     echo "Grading $_user" > $terminal
+    if [[ ! -d $_dir ]] ; then
+      echo "No submission for the user"
+      printf "$_user: 0\n" >>${CLASS_GRADE_REPORT}
+      return
+    fi
+
     cd $_dir
     if [[ -f ${ASSIGNMENT_DIR}/makefile ]] ; then
        make -f ${ASSIGNMENT_DIR}/makefile
