@@ -49,6 +49,7 @@ The following example shows how I installed the software for my COMP122 class.
   1. Create the ``./grading.env`` to override defaults (optional)
   1. Create a grading rubric: ``./grading_rubric``
   1. Create the answer key: ``./answers.md``
+  1. Create a makefile to address no paper submissions: ``./makefile``
 
 ## Grading and Review Process
   1. Change your current working directory to be the assignment directory: ``cd 01-assignment``
