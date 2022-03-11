@@ -39,7 +39,7 @@
 #   - grade_start
 #   - pull_submission "<account>"
 #   - grade_submission "<account>"
-#   - publish_submission "<account>"
+#   - publish_grades "<account>"
 #   * update the individual grade within the master spreadsheet
 #
 #############################################################
@@ -199,7 +199,10 @@ function clone_submissions () {
 
 function pull_submission () {
    _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${1}/
-   git -C ${_dir} pull
+
+   if [[ -f $_dir ]] ; then 
+     git -C ${_dir} pull
+   fi
 }
 function pull_submissions () {
   while read _user ; do
@@ -210,14 +213,16 @@ function pull_submissions () {
 function publish_grade () {
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${1}/
 
-  if [[ -f {ANSWER_FILE} ]] ; then
-    cp ${ANSWER_FILE} ${_dir}/.
-    git -C ${_dir} add ${ANSWER_FILE}
-    git -C ${_dir} commit -m 'Added Answers File' ${ANSWER_FILE}
+  if [[ -d ${_dir} ]] ; then
+    if [[ -f {ANSWER_FILE} ]] ; then
+      cp ${ANSWER_FILE} ${_dir}/.
+      git -C ${_dir} add ${ANSWER_FILE}
+      git -C ${_dir} commit -m 'Added Answers File' ${ANSWER_FILE}
+    fi
+    git -C ${_dir} add ${STUDENT_GRADE_REPORT}
+    git -C ${_dir} commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
+    git -C ${_dir} push
   fi
-  git -C ${_dir} add ${STUDENT_GRADE_REPORT}
-  git -C ${_dir} commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
-  git -C ${_dir} push
 }
 function publish_grades () {
   while read _user  ; do
