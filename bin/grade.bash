@@ -84,11 +84,15 @@ function grade_start () {
   ANSWER_FILE="${ASSIGNMENT_DIR}/answers.md"        # To be added to the student's repo
   RUBRIC_FILE="${ASSIGNMENT_DIR}/grading_rubric"    
 
+  SUBMISSION_LOG=${SUBMISSION_DIR}/submissions.log
+  SUBMISSION_ROSTER=${SUBMISSION_DIR}/roster
+  NON_SUBMISSION_ROSTER=${SUBMISSION_DIR}/non_submission.roster
 }
 
 # Student Related Files
 ASSIGNMENT_FILE="assignment.md"                   # Contained within the student's repo
 SUBMISSION_FILE="submission.md"                   # Contained within the student's repo
+STUDENT_ANSWER_KEY="answers.md"
 STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
 
 
@@ -124,16 +128,13 @@ function grade_submission () {
     if [[ -f ${ASSIGNMENT_DIR}/makefile ]] ; then
        make -f ${ASSIGNMENT_DIR}/makefile
     else
-       # Assume it is a paper submission
-       #rm -f ${STUDENT_GRADE_REPORT}
-   
-       #_files="${SUBMISSION_FILE}"
-       #if [[ $RESPONSE_TAG ]] ; then
-       #  grep -e "${RESPONSE_TAG}" "${SUBMISSION_FILE}" > ${SUBMISSION_FILE}.txt
-       #  _files="$_files ${SUBMISSION_FILE}.txt"
-       #fi
-       #${LAUNCH_COMMAND} "${GRADING_EDITOR}" ${_files}
-       make -f ${CLASSROOM_DIR}/makefile paper_grade
+       if [[ ! -f ${SUBMISSION_FILE} ]] ; then
+         echo "No submission for the user"
+         printf "$_user: 0\n" >>${CLASS_GRADE_REPORT}
+         return
+       else
+         make -f ${CLASSROOM_DIR}/makefile paper_grade
+       fi
     fi
 
     # Prompt the Professor for the stuff required for the grading rubric
@@ -171,7 +172,7 @@ function grade_submission () {
 function grade_submissions () {
   while read _user ; do
     grade_submission ${_user}
-  done < ${CLASS_ROSTER}
+  done < ${SUBMISSION_ROSTER}
 }
 
 
@@ -184,9 +185,17 @@ function reset_grading () {
 
 function clone_submission () {
    _dir="${SUBMISSION_DIR}"
+   _student="${1}"
 
    mkdir -p "$_dir"
-   git -C ${_dir} clone ${STUDENT_BASE_URL}-${1}.git 
+   git -C ${_dir} clone ${STUDENT_BASE_URL}-${_student}.git >> ${SUBMISSION_LOG} 2>&1
+   if [ $? == 0 ] ; then
+      echo "Cloned: ${_student}"
+      echo ${_student} >> ${SUBMISSION_ROSTER}
+   else
+      echo "No Submission: ${_student}" 1>&2
+      echo ${_student} >> ${NON_SUBMISSION_ROSTER}
+   fi
    # Note that if there is no submission for a student,
    # Subsequent operations that create files are in error
 }
@@ -198,36 +207,53 @@ function clone_submissions () {
 
 
 function pull_submission () {
-   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${1}/
+   _student=${1}
+   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
 
-   if [[ -f $_dir ]] ; then 
-     git -C ${_dir} pull
+   if [[ -d $_dir ]] ; then 
+     git -C ${_dir} pull >> ${SUBMISSION_LOG} 2>&1
+     if [ $? == 0 ] ; then
+       echo "Pulled: ${_student}"
+     else
+       echo "Error Pulling: ${_student}" 1>&2
+     fi 
    fi
 }
 function pull_submissions () {
   while read _user ; do
     pull_submission $_user
-  done < ${CLASS_ROSTER}
+  done < ${SUBMISSION_ROSTER}
 }  
 
 function publish_grade () {
-  _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${1}/
+  _student=${1}
+  _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
 
   if [[ -d ${_dir} ]] ; then
-    if [[ -f {ANSWER_FILE} ]] ; then
-      cp ${ANSWER_FILE} ${_dir}/.
-      git -C ${_dir} add ${ANSWER_FILE}
-      git -C ${_dir} commit -m 'Added Answers File' ${ANSWER_FILE}
+    if [[ -f ${ANSWER_FILE} ]] ; then
+      {
+        cp ${ANSWER_FILE} ${_dir}/.
+        git -C ${_dir} add ${STUDENT_ANSWER_KEY}
+        git -C ${_dir} commit -m 'Added Answers File' ${STUDENT_ANSWER_KEY}
+      } >> ${SUBMISSION_LOG} 2>&1
     fi
-    git -C ${_dir} add ${STUDENT_GRADE_REPORT}
-    git -C ${_dir} commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
-    git -C ${_dir} push
+    {
+      git -C ${_dir} add ${STUDENT_GRADE_REPORT}
+      git -C ${_dir} commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
+    } >> ${SUBMISSION_LOG} 2>&1
+
+    git -C ${_dir} push >> ${SUBMISSION_LOG} 2>&1
+    if [ $? == 0 ] ; then
+       echo "Published: ${_student}"
+    else
+       echo "Error Pushing: ${_student}" 1>&2
+    fi 
   fi
 }
 function publish_grades () {
   while read _user  ; do
     publish_grade $_user
-  done < ${CLASS_ROSTER}
+  done < ${SUBMISSION_ROSTER}
 }  
 
 
