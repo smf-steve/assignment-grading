@@ -33,9 +33,15 @@ The following example shows how I installed the software for my COMP122 class.
   1. Add, at least, the following files to that repository
      - README.md
      - assignment.md
-  1. Modify this assignment to be template directory
+  1. Modify this assignment to be a template repository
   1. Create the assignment in GitHub Classroom
      - recommend using a two-digit naming scheme for the assignment prefix
+     - e.g., 
+       * 42: denotes the 2nd assignment in the 4th section of the class
+       * 40: denotes the exam/quiz for the 4th section of the class
+       * \<assignment_name\>: the name of the GitHub assignment
+       * 42-<assignment_name>: the name of the GitHub assignment prefix
+       * 42-<assignment_name>-<student>: the respository for \<student\>
   1. Distribute the assignment invitation to your students
 
 ## Assignment Setup Process:
@@ -46,10 +52,14 @@ The following example shows how I installed the software for my COMP122 class.
      git clone git@github.com:COMP122/assignment.git 01-assignment
      cd 01-assignment
      ```
+    - A directory called submissions is created that contains all of the student submissions, and
+      * submissions.log: a log of all git commands performed during the grading process.
+      * roster: a list of students that have accepted the assignment
+      * non_submission.roster: a list of students that have accepted the assignment
   1. Create the ``./grading.env`` to override defaults (optional)
   1. Create a grading rubric: ``./grading_rubric``
   1. Create the answer key: ``./answers.md``
-  1. Create a makefile to address no paper submissions: ``./makefile``
+  1. (Optional) Create a makefile to address non-paper submissions: ``./makefile``
 
 ## Grading and Review Process
   1. Change your current working directory to be the assignment directory: ``cd 01-assignment``
