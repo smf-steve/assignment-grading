@@ -14,11 +14,11 @@
 ### Section Two
 1. In the following code block, provide the commands used to create the assignment.md file
    ```
-   git clone sample_assignment.git                                                         <!-- response -->
-   cd sample_assignment                                                                    <!-- response -->
-   cp assignment.md submission.md                                                          <!-- response -->
-   git add submission.md                                                                   <!-- response -->
-   git commit -m 'creating the submission.md' file                                         <!-- response -->
+   git clone sample_assignment.git                             <!-- response -->
+   cd sample_assignment                                        <!-- response -->
+   cp assignment.md submission.md                              <!-- response -->
+   git add submission.md                                       <!-- response -->
+   git commit -m 'creating the submission.md' file             <!-- response -->
    ```
    <!-- Feel free to add or remove additional response lines as needed. -->
 
