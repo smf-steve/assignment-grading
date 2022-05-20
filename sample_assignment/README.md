@@ -2,14 +2,25 @@
 
 ## To Get Started
   1. Clone this repository to your computer.  
-  2. Review the "assignment.md" file.
-  3. Make a copy of this file, naming it "submission.md": ``cp assignment.md submission.md``
+  2. Make a copy of this file, naming it "submission.md": ``cp assignment.md submission.md``
+  3. Review the "submission.md" file.
   4. Edit this file to include your name in the appropriate location.
   5. Add this file to your local repository: ``git add submission.md``
-  6. Commit this file to your local repository: ``git commit -m 'creating file'``
+  6. Commit this file to your local repository: ``git commit -m 'Starting the Assignment'``
   7. Push the current contents of your local repository to remote repository: ``git push``
+  8. To summarize, perform the following steps, before you start working on the assignment:
+     ```
+     git clone <repository_url>/<name>.git
+     cd <name>
+     cp assignment.md submission.md
+     cat submission.md
+     edit submission.md   # using your favoriate editor
+     git add submission.md
+     git commit -m 'Starting the Assignment'
+     git push
+     ```
 
-## Work on the Assignment
+## Work on the Assignment, INCREMENTALLY
   1. Incrementally edit and submit your "submission.md" file
      - ``git add``, ``git commit``, and ``git push``
      - get into the habit of making incremental updates to your working assignments.
