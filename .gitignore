@@ -1,6 +1,14 @@
 .DS_Store
-roster
-[0-9][0-9]-*
 assignments.md
+
+# The set of  assignments
+[0-9][0-9]-*
+
+# The summary grade files
 grades.*
 
+# The roster provided by GitHub Classroom
+classroom_roster.csv
+
+# The roster of just GitHub IDs to grade
+roster

@@ -4,6 +4,8 @@
 ## Process Issues:
 After using this system to grade student submissions for two semesters, here is a list of common issues encountered.
 
+1. use the github classroom roster format for the roster.
+
 1. Even with repeations, students find it difficult to follow the process.
    * So reenforcement is good.
 

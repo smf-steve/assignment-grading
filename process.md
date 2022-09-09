@@ -5,7 +5,7 @@
    - Create a Github Organization for a GitHub Classroom: ${GITHUB_ORG}
    - Enroll in Github Classroom
    - Create a Github Classroom and identify it's URL: ${CLASSROOM_URL}
-   - Upload a class roster, which students will use to link to their github accounts.
+   - Upload a class roster, which students will use to link to their GitHub accounts.
 
 ## Installation Process for a Single Class (${CLASSROOM_DIR})
 This software package and it's define file structure has been designed to support a single class. As such, you need to download this package once for each class.  
@@ -21,28 +21,28 @@ The following example shows how I installed the software for my COMP122 class.
   1. Update the .grading.env file to provide information about the GitHub Classroom.
      ```
      GITHUB_ORG="CIT122"
-     CLASSROOM_URL="https://classroom.github.com/classrooms/59349295-comp122-f21"
      ```
   1. Create a text file, called roster, that contains a list of all of the student's Github Accounts.
      ```
-     cat >> roster
+     # download the classroom roster from github: classroom_roster.csv
+     awk -F, '{print $2}' classroom_roster.csv | sed -e 's/"//g' > roster
      ```
 
-## Assignment Creation Process
-  1. Create an assignment with you GitHub Organization (${GITHUB_ORG})
-  1. Add, at least, the following files to that repository
+## Assignment Creation Process:
+  1. Create an assignment with you GitHub Organization (${GITHUB_ORG}).
+  1. Add, at least, the following files to that repository:
      - README.md
      - assignment.md
-  1. Modify this assignment to be a template repository
-  1. Create the assignment in GitHub Classroom
-     - recommend using a two-digit naming scheme for the assignment prefix
-     - e.g., 
+  1. Modify this assignment to be a template repository.
+  1. Create the assignment in GitHub Classroom.
+     - I recommend using a two-digit naming scheme for the assignment prefix
+     - For example,
        * 42: denotes the 2nd assignment in the 4th section of the class
        * 40: denotes the exam/quiz for the 4th section of the class
        * \<assignment_name\>: the name of the GitHub assignment
        * 42-<assignment_name>: the name of the GitHub assignment prefix
-       * 42-<assignment_name>-<student>: the respository for \<student\>
-  1. Distribute the assignment invitation to your students
+       * 42-<assignment_name>-<student>: the repository for \<student\>
+  1. Distribute the assignment invitation to your students.
 
 ## Assignment Setup Process:
  1. Clone the assignment's template repository into the appropriate directory
@@ -77,11 +77,11 @@ The following example shows how I installed the software for my COMP122 class.
 
 ## Regrading a Single Student's Submission
   1. ``cd 01-assignment``
-  1. ``grade_start``: to start the grading process, which reasserts tenvironment variables
+  1. ``grade_start``: to start the grading process, which reasserts the environment variables
   1. ``clone_submission student``: to obtain a copy of the student's files
   1. ``pull_submission student``: to pull the student's repo for possible updates
   1. ``grade_submission student``: to grade student's submission
   1. ``publish_grade student``: to publish the student's grad
   1. Review updated grades append to ``../grades.01-assignment``
-  1. Rpdate the individual grade within the master spreadsheet
+  1. Update the individual grade within the master spreadsheet
 
