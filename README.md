@@ -52,7 +52,7 @@ As a consequence of grading a set of assignments, the following file structure w
       * ``README.md``: general instructions on the submission process
       * ``assignment.md``: the original assignment
       * ``answers.md``: the official answers to the assignment
-      * ``grading_grading``: defined grading rubric
+      * ``grading_rubric``: defined grading rubric
       * ``submissions``: directory for all student submissions
         * ``01-assignment-student-id``
           * README.md
