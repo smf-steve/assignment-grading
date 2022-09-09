@@ -13,8 +13,8 @@ This software package and it's define file structure has been designed to suppor
 The following example shows how I installed the software for my COMP122 class.
   1. Install this software package.
      ```
-     mkdir -p ~/comp122/deliverables
-     cd ~/comp122/deliverables
+     mkdir -p ~/comp122
+     cd ~/comp122
      git clone git@github.com:smf-steve/assignment-grading.git
      cd assignment-grading   # ${CLASSROOM_DIR}
      ```
