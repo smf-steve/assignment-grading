@@ -1,6 +1,6 @@
 # Installation, Assignment, and Grading Process
 
-## Prerequisite:
+## Prerequisites:
    - Obtain a Github Account (with ssh-key authentication)
    - Create a Github Organization for a GitHub Classroom: ${GITHUB_ORG}
    - Enroll in Github Classroom
