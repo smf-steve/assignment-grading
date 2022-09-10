@@ -21,48 +21,65 @@ To facilitate the review and grading process of student paper-like assignments s
      * to prepare them to use git for further use in their academic careers
   1. To have students learn and utilize a markdown language for documentation, etc.
 
-## Assignment Repository Structure
-For each assignment, a student will create a repository from a template repository using the standard GitHub Classroom process. The student's repository will contain, at least the following files:
-  1. README.md: general instructions to the students on the "Assignment Submission Process"
-  1. assignment.md: the original unmodified copy of the assignment to be completed by the student.
-  1. submission.md: the modified copy of the assignment that incorporates the student's answers
-
-As part of the grading process the following files will be added to the students repository:
-  1. answers.md: a modified copy of the assignment that incorporates the professor's answers
-  1. grade.report: a break down of the assigned grade based upon a grading rubric
+## Assignment Template Repository Structure:
+For each assignment, the Professor creates a template repository.  This template repository is used by GitHub classroom to create a repository for each student.  This template repostory contains, at least the following files:
+  * ``README.md``: general instructions on the "Assignment Submission Process"
+  * ``assignment.md``: the original version of the assignment.
 
 
-## Class File Structure
+## Assignment Solution Repository Stucture:
+For each assignment, the Professor creates a repository that extends the template repostory by adding (at least) the following files:
+  * ``answers.md``: the assignment with the Professor's answers incorporated
+  * ``grading_rubric``: a list of individual items used to score the assignment
+  * ``makefile``: (optional) a file used to review and to evaluate a student submission
+
+## Student's Assignment Repostory Structure:
+For each assignment, each student is provided with a unique repository that extends the template repository.  Some of these files are added by the student, which is there submission, and Some of these files are added as part of the grading process.
+
+These files include:
+  * ``README.md``: general instructions on the "Assignment Submission Process"
+  * ``assignment.md``: the original version of the assignment.
+  * ``answers.md``: the assignment with the Professor's answers incorporated
+  * ``grade.report``: the final grade for break down of scores based upon the grading rubric
+
+## Assignment Grading File Structure:
 As a consequence of installing this repository, the following file structure will be created:
   * assignment_grading: (this directory)
     * README.md: this file 
     * grade.bash: a bash script that supports grading of paper-like assignments
-    * ``sample_assignment``: 
-      - a directory that contains a sample assignment
+    * 00_sample_assignment: a directory that contains a sample assignment
+      * assignment_key: a directory to store the Professor's solution 
+        * ``README.md``: general instructions on the submission process
+        * ``assignment.md``: the original assignment
+        * ``answers.md``: the official answers to the assignment
+        * ``grading_rubric``: defined grading rubric
+       * submissions: a directory to store each of the student's submissions 
 
 
-As a consequence of grading a set of assignments, the following file structure will be added:
+As a consequence of using this system additional files are added to this file struction.  The structure of this directory is as follows:
   * assignment_grading: (this directory)
+    * classroom_roster.csv: the class roster downloaded from GitHub Classrooom
     * roster: a text file that contains a list of student's git accounts 
-    * ``grades.01-assignment``
-    * ``grades.02-assignment``
+    * ``grades.01-assignment``: grades for the 01-st assignment
+    * ``grades.02-assignment``: grades for the 02-nd assignment
     * ...
-    * ``grades.nn-assignment``
-    * ``01-assignment``: directory for ``assignment``
-      * ``README.md``: general instructions on the submission process
-      * ``assignment.md``: the original assignment
-      * ``answers.md``: the official answers to the assignment
-      * ``grading_rubric``: defined grading rubric
+    * ``grades.nn-assignment``: grades for the n-th assignment
+    * ``01-assignment``: directory for the 01-st ``assignment``
+      * ``assignment``: the directory holding the assignment information
+        * ``README.md``: general instructions on the submission process
+        * ``assignment.md``: the original assignment
+        * ``answers.md``: the official answers to the assignment
+        * ``grading_rubric``: defined grading rubric
       * ``submissions``: directory for all student submissions
-        * ``01-assignment-student-id``
+        * ``01-assignment-student-id_1``
           * README.md
           * assignment.md
           * submission.md
           * answers.md
           * grade.report
-        * ``01-assignment-student-id2``
+        * ``01-assignment-student-id_2``
         * ...
-        * ``01-assignment-student-idN``
+        * ``01-assignment-student-id_N``
     * ``02-assignment``
     * ...
     * ``nn-assignment``
