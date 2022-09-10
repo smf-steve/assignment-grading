@@ -22,11 +22,11 @@ To facilitate the review and grading process of student paper-like assignments s
   1. To have students learn and utilize a markdown language for documentation, etc.
 
 ---
-## Repository Overview:
+## Overiew of Associated Repositories:
 A number of different repositories are utilized by the grading process.  These repositories are:
-  1. an assignment template repository: 
-  1. an assignment solution repository: 
-  1. a student's submission repository:
+  1. an assignment template repository 
+  1. an assignment solution repository 
+  1. a student's submission repository
 
 The structure of these repositories are provided below.
 
@@ -73,7 +73,7 @@ To faciliate the grading process, a single directory (per class) is created.  As
     * ...
     * ``grades.nn-assignment``: grades for the n-th assignment
     * ``01-assignment/``: directory for the 01-st ``assignment``
-      * ``assignment/``: the solutions repository
+      * ``assignment_key/``: the solutions repository
       * ``submissions/``: directory for all student submissions
         * ``01-assignment-student-id_1/``: student's assignment repositoy
         * ``01-assignment-student-id_2/``
