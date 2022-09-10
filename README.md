@@ -24,19 +24,19 @@ To facilitate the review and grading process of student paper-like assignments s
 ---
 ## Overiew of Associated Repositories:
 A number of different repositories are utilized by the grading process.  These repositories are:
-  1. an assignment template repository 
-  1. an assignment solution repository 
+  1. an assignment-template repository 
+  1. an assignment-solution repository 
   1. a student's submission repository
 
 The structure of these repositories are provided below.
 
-### Assignment Template Repository Structure:
+### Assignment-Template Repository Structure:
 For each assignment, the Professor creates a template repository.  This template repository is used by GitHub classroom to create a repository for each student.  This template repostory contains, at least the following files:
   * ``README.md``: general instructions on the "Assignment Submission Process"
   * ``assignment.md``: the original version of the assignment.
 
 
-### Assignment Solution Repository Stucture:
+### Assignment-Solution Repository Stucture:
 For each assignment, the Professor creates a repository that extends the template repostory by adding (at least) the following files:
   * ``answers.md``: the assignment with the Professor's answers incorporated
   * ``grading_rubric``: a list of individual items used to score the assignment
@@ -55,7 +55,7 @@ These files include:
 ---
 ## Assignment Grading File Structure:
 To faciliate the grading process, a single directory (per class) is created.  As assignments are distributed, collected, and graded, additional files are added to this file structure.  This structure is defined as follows:
-
+  * the directory structure for this class: *${CLASSROOM_DIR}*
   * ``assignment_grading/``: (this directory)
     * ``README.md``: this file 
     * ``bin/grade.bash``: a bash script that supports grading of paper-like assignments

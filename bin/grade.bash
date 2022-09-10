@@ -15,16 +15,18 @@
 ################################################################################################
 # Processes:
 #
-# New Assignment:
-#   - clone the assignment's template repository to <assignment-prefix>
-#   - cd "<assignment-name>"
-#   - create an "grading.env" file to override the defaults (optional)
-#   - create the answers.md file
-#   - create the grading_rubric file
+#   Prerequisites:  (See the process.md file)
+#     - create a assignment template repository
+#     - create a assignment solution repository
 #
-# Grading Process
-#   - cd "<assignment-name>"
-#   - source ../grade.bash ..
+#   Setup Processes
+#   - cd ${CLASSROOM_DIR}/assignment_grading
+#   - make a directory for the assignment :  cd nn-assignment-name
+#   - clone the assignment-solution repository into assignment_key
+#
+#   Grading Process
+#   - source ../bin/grade.bash ${CLASSROOM_DIR}
+#   - cd assignment_grading/"<nn-assignment-name>"
 #   - grade_start
 #   - reset_grading (optional)
 #   - clone_submissions
@@ -48,26 +50,30 @@
 ##    source $path/bin/grade.bash CLASSROOM_DIR
 ##      - CLASSROOM_DIR is set as defined
 ##    source $path/bin/grade.bash
-##      - If CLASSROOM_DIR is unset, then set it to pwd
+##      - If CLASSROOM_DIR is unset, then set it to $cwd/../..
+##      - I.e., it assumed that the script was invoked in:
+##        ${CLASSROOM_DIR}/assignment_grading/nn-assignment-name
 
 # Normalize the file path
 if [[ -n $1 ]] ; then
   [[ -d $1 ]] && CLASSROOM_DIR=$( cd $1 ; pwd )
 fi
-[[ -z ${CLASSROOM_DIR} ]] && CLASSROOM_DIR=$(pwd)
+[[ -z ${CLASSROOM_DIR} ]] && CLASSROOM_DIR=$( cd ../.. ; pwd )
 
-
-GRADING_SCRIPT="${CLASSROOM_DIR}/bin/grade.bash"  # This is the name of this particular script 
-CLASSROOM_ENV="${CLASSROOM_DIR}/.grading.env"
-source ${CLASSROOM_ENV}
+ASSIGNMENT_GRADING_DIR=${CLASSROOM_DIR}/assignment_grading
+GRADING_SCRIPT="${ASSIGNMENT_GRADING_DIR}/bin/grade.bash"  # This is the name of this particular script 
+GRADING_ENV="${ASSIGNMENT_GRADING_DIR}/assignment_grading/.grading.env"
+source ${GRADING_ENV}
 
 # grade_start must be called at the top-level directory of a particular assignment
 function grade_start () {
-  # CLASSROOM_DIR="${PWD}/.."
+  # CLASSROOM_DIR="${PWD}/../.."
   # GRADING_SCRIPT="${CLASSROOM_DIR}/bin/grade.bash" 
   # source ${GRADING_SCRIPT}
-  source ${CLASSROOM_ENV}
+  source ${GRADING_ENV}
 
+  # By virtual of sourcing the GRADING_ENV, the ASSIGNMENT_DIR is defined
+  echo "Starting the grading for:" ${ASSIGNMENT_NAME}
   # If there is a per-assignment grading.env file, override the class defaults
   if [[ -f "${ASSIGNMENT_DIR}/grading.env" ]] ; then
     ASSIGNMENT_ENV="${ASSIGNMENT_DIR}/grading.env"
@@ -81,12 +87,12 @@ function grade_start () {
   # Assignment Based Files
   CLASS_GRADE_REPORT="${CLASSROOM_DIR}/grades.${ASSIGNMENT_NAME}"
   SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
-  ANSWER_FILE="${ASSIGNMENT_DIR}/answers.md"        # To be added to the student's repo
-  RUBRIC_FILE="${ASSIGNMENT_DIR}/grading_rubric"    
+  ANSWER_FILE="${ASSIGNMENT_DIR}/answer_key/answers.md"        # To be added to the student's repo
+  RUBRIC_FILE="${ASSIGNMENT_DIR}/answer_key/grading_rubric"    
 
-  SUBMISSION_LOG=${SUBMISSION_DIR}/submissions.log
-  SUBMISSION_ROSTER=${SUBMISSION_DIR}/roster
-  NON_SUBMISSION_ROSTER=${SUBMISSION_DIR}/non_submission.roster
+  SUBMISSION_LOG=${ASSIGNMENT_DIR}/submissions.log
+  SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/roster
+  NON_SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/non_submission.roster
 }
 
 # Student Related Files
