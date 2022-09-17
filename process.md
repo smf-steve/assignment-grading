@@ -61,10 +61,10 @@ The following example shows how I installed the software for my COMP122 class.
     mkdir nn-assignment-name
     ```
 
- 1. Clone the assignment-solution repository into the assignment_key directory
+ 1. Clone the assignment-solution repository into the ``key`` directory
      ```
      cd nn-assignment-name
-     git clone git@github.com:COMP122/assignment-name.git assignment_key
+     git clone git@github.com:COMP122/assignment-name.git key
      cd 01-assignment
      ```
     - A directory called submissions is created that contains all of the student submissions, and

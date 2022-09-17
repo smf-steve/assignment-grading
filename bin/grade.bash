@@ -22,7 +22,7 @@
 #   Setup Processes
 #   - cd ${CLASSROOM_DIR}/assignment_grading
 #   - make a directory for the assignment :  cd nn-assignment-name
-#   - clone the assignment-solution repository into assignment_key
+#   - clone the assignment-solution repository into the ``key`` directory
 #
 #   Grading Process
 #   - source ../bin/grade.bash ${CLASSROOM_DIR}
@@ -87,8 +87,8 @@ function grade_start () {
   # Assignment Based Files
   CLASS_GRADE_REPORT="${CLASSROOM_DIR}/grades.${ASSIGNMENT_NAME}"
   SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
-  ANSWER_FILE="${ASSIGNMENT_DIR}/answer_key/answers.md"        # To be added to the student's repo
-  RUBRIC_FILE="${ASSIGNMENT_DIR}/answer_key/grading_rubric"    
+  ANSWER_FILE="${ASSIGNMENT_DIR}/key/answers.md"        # To be added to the student's repo
+  RUBRIC_FILE="${ASSIGNMENT_DIR}/key/grading_rubric"    
 
   SUBMISSION_LOG=${ASSIGNMENT_DIR}/submissions.log
   SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/roster
