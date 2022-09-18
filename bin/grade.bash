@@ -83,15 +83,17 @@ function grade_start () {
   GITHUB_PREFIX="git@github.com:${GITHUB_ORG}"
   STUDENT_BASE_URL=${GITHUB_PREFIX}/${ASSIGNMENT_NAME}
   CLASS_ROSTER="${ASSIGNMENT_GRADING_DIR}/roster"                  # List of github usernames of each student
+  CLASS_MAKEFILE="${ASSIGNMENT_GRADING_DIR}/makefile"
 
   # Assignment Based Files
-  CLASS_GRADE_REPORT="${CLASSROOM_DIR}/grades.${ASSIGNMENT_NAME}"
+  CLASS_GRADE_REPORT="${ASSIGNMENT_GRADING_DIR}/grades.${ASSIGNMENT_NAME}"
   SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
   ANSWER_FILE="${ASSIGNMENT_DIR}/key/answers.md"        # To be added to the student's repo
   RUBRIC_FILE="${ASSIGNMENT_DIR}/key/grading_rubric"    
+  MAKEFILE="${ASSIGNMENT_DIR}/key/makefile"
 
   SUBMISSION_LOG=${ASSIGNMENT_DIR}/submissions.log
-  SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/roster
+  SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/submission.roster
   NON_SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/non_submission.roster
 }
 
@@ -131,15 +133,15 @@ function grade_submission () {
     fi
 
     cd $_dir
-    if [[ -f ${ASSIGNMENT_DIR}/makefile ]] ; then
-       make -f ${ASSIGNMENT_DIR}/makefile
+    if [[ -f ${MAKEFILE} ]] ; then
+       make -f ${MAKEFILE}
     else
        if [[ ! -f ${SUBMISSION_FILE} ]] ; then
          echo "No submission for the user"
          printf "$_user: 0\n" >>${CLASS_GRADE_REPORT}
          return
        else
-         make -f ${CLASSROOM_DIR}/makefile paper_grade
+         make -f ${CLASS_MAKEFILE} paper_grade
        fi
     fi
 
