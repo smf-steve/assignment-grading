@@ -60,9 +60,9 @@ if [[ -n $1 ]] ; then
 fi
 [[ -z ${CLASSROOM_DIR} ]] && CLASSROOM_DIR=$( cd ../.. ; pwd )
 
-ASSIGNMENT_GRADING_DIR=${CLASSROOM_DIR}/assignment_grading
+ASSIGNMENT_GRADING_DIR=${CLASSROOM_DIR}/assignment-grading
 GRADING_SCRIPT="${ASSIGNMENT_GRADING_DIR}/bin/grade.bash"  # This is the name of this particular script 
-GRADING_ENV="${ASSIGNMENT_GRADING_DIR}/assignment_grading/.grading.env"
+GRADING_ENV="${ASSIGNMENT_GRADING_DIR}/.grading.env"
 source ${GRADING_ENV}
 
 # grade_start must be called at the top-level directory of a particular assignment
@@ -82,7 +82,7 @@ function grade_start () {
 
   GITHUB_PREFIX="git@github.com:${GITHUB_ORG}"
   STUDENT_BASE_URL=${GITHUB_PREFIX}/${ASSIGNMENT_NAME}
-  CLASS_ROSTER="${CLASSROOM_DIR}/roster"                  # List of github usernames of each student
+  CLASS_ROSTER="${ASSIGNMENT_GRADING_DIR}/roster"                  # List of github usernames of each student
 
   # Assignment Based Files
   CLASS_GRADE_REPORT="${CLASSROOM_DIR}/grades.${ASSIGNMENT_NAME}"

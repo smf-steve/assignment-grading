@@ -59,7 +59,7 @@ To faciliate the grading process, a single directory (per class) is created.  As
   * ``assignment_grading/``: (this directory)
     * ``README.md``: this file 
     * ``bin/grade.bash``: a bash script that supports grading of paper-like assignments
-    * ``00_sample_assignment/``: a directory that contains a sample assignment
+    * ``00-sample-assignment/``: a directory that contains a sample assignment
       * ``key/``: a directory to store the Professor's solution 
         * ``README.md``: general instructions on the submission process
         * ``assignment.md``: the original assignment

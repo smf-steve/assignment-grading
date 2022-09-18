@@ -25,7 +25,7 @@ The following example shows how I installed the software for my COMP122 class.
   1. Create a text file, called roster, that contains a list of all of the student's Github Accounts.
      ```
      # download the classroom roster from github: classroom_roster.csv
-     awk -F, '{print $2}' classroom_roster.csv | sed -e 's/"//g' > roster
+     awk -F, '{print $2}' classroom_roster.csv | sed -e '1d' -e 's/"//g' > roster
      ```
 
 ## Assignment Creation Process:
@@ -81,7 +81,7 @@ The following example shows how I installed the software for my COMP122 class.
      ```
 
   1. Source the grade.bash file:
-     - ``source ../bin/grade.bash ${CLASSROOM_DIR}``  
+     - ``source ../bin/grade.bash``  
 
   1. Execute various CLI commands within the assignment directory
      1. ``grade_start``: to start the grading process, which reasserts the environment variables
