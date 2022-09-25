@@ -13,10 +13,12 @@ RESPONSE_TAG='<!-- response -->'
 
 
 paper_grade: submission.md submission.md.txt
-	echo rm -f $(STUDENT_GRADE_REPORT)
+	@echo rm -f $(STUDENT_GRADE_REPORT)
 	git log | head
-	$(LAUNCH) $(EDITOR) submission.md submission.md.txt
+	#$(LAUNCH) $(EDITOR) submission.md submission.md.txt
+	subl submission.md submission.md.txt
 
 submission.md.txt: submission.md
-	 grep -e $(RESPONSE_TAG) submission.md > submission.md.txt
+	grep -e $(RESPONSE_TAG) submission.md > submission.md.txt
+	@echo
 
