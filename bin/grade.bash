@@ -86,15 +86,16 @@ function grade_start () {
   CLASS_MAKEFILE="${ASSIGNMENT_GRADING_DIR}/makefile"
 
   # Assignment Based Files
+  LOCAL_GRADE_REPORT="${ASSIGNMENT_DIR}/grades.${ASSIGNMENT_NAME}"
   CLASS_GRADE_REPORT="${ASSIGNMENT_GRADING_DIR}/grades.${ASSIGNMENT_NAME}"
   SUBMISSION_DIR="${ASSIGNMENT_DIR}/submissions"
   ANSWER_FILE="${ASSIGNMENT_DIR}/key/answers.md"        # To be added to the student's repo
   RUBRIC_FILE="${ASSIGNMENT_DIR}/key/grading_rubric"    
   MAKEFILE="${ASSIGNMENT_DIR}/key/makefile"
 
-  SUBMISSION_LOG=${ASSIGNMENT_DIR}/submissions.log
-  SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/submission.roster
-  NON_SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/non_submission.roster
+  SUBMISSION_LOG=${ASSIGNMENT_DIR}/grading.log
+  SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/roster.submissions
+  NON_SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/roster.non_submissions
 }
 
 # Student Related Files
@@ -178,6 +179,8 @@ function grade_submission () {
   )
 }
 function grade_submissions () {
+  touch ${CLASS_GRADE_REPORT}
+  ln -s ${CLASS_GRADE_REPORT} ${LOCAL_GRADE_REPORT} 
   while read _user ; do
     grade_submission ${_user}
   done < ${SUBMISSION_ROSTER}
@@ -264,4 +267,13 @@ function publish_grades () {
   done < ${SUBMISSION_ROSTER}
 }  
 
+function update_all () {
+  CMD="$*"
+  while read _student  ; do
+    _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
+    pushd ${_dir} 2>/dev/null
+    eval $CMD
+    popd 2>/dev/null
+  done < ${SUBMISSION_ROSTER}
+} 
 
