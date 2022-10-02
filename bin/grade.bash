@@ -128,18 +128,24 @@ function grade_submission () {
     echo "--------------" > $terminal
     echo "Grading $_user" > $terminal
     if [[ ! -d $_dir ]] ; then
-      echo "No submission for the user"
+      echo "User did not accept assignment"
       printf "$_user: 0\n" >>${CLASS_GRADE_REPORT}
       return
     fi
 
     cd $_dir
+    git tag -f graded
     if [[ -f ${MAKEFILE} ]] ; then
        make -f ${MAKEFILE}
     else
        if [[ ! -f ${SUBMISSION_FILE} ]] ; then
          echo "No submission for the user"
          printf "$_user: 0\n" >>${CLASS_GRADE_REPORT}
+         { 
+           echo "# Grading summary for \"${ASSIGNMENT_NAME}\" assignment"
+           echo 
+           echo "Missing submission file: ${SUBMISSION_FILE}"
+         }  >> ${STUDENT_GRADE_REPORT}
          return
        else
          make -f ${CLASS_MAKEFILE} paper_grade
@@ -241,6 +247,7 @@ function publish_grade () {
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
 
   if [[ -d ${_dir} ]] ; then
+    git -C ${_dir} checkout main
     if [[ -f ${ANSWER_FILE} ]] ; then
       {
         cp ${ANSWER_FILE} ${_dir}/.
@@ -253,6 +260,7 @@ function publish_grade () {
       git -C ${_dir} commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
     } >> ${SUBMISSION_LOG} 2>&1
 
+    git -C ${_dir} push --tags >> ${SUBMISSION_LOG} 2>&1
     git -C ${_dir} push >> ${SUBMISSION_LOG} 2>&1
     if [ $? == 0 ] ; then
        echo "Published: ${_student}"
@@ -266,6 +274,24 @@ function publish_grades () {
     publish_grade $_user
   done < ${SUBMISSION_ROSTER}
 }  
+
+function _checkout_date () {
+  _date=${1}
+  _student=${2}
+
+  _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
+  _hash=$(git rev-list -1 --until="${_date}" main)
+  git -C ${_dir} checkout ${_hash}
+}
+
+function checkout_date () {
+  _date=${1}
+  while read _user ; do
+    check_version $_date $_user 
+  done < ${SUBMISSION_ROSTER}
+}  
+
+
 
 function update_all () {
   CMD="$*"
