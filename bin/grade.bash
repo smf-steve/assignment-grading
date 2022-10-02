@@ -37,7 +37,7 @@
 
 # Assignment re-grading of single student process
 #   - cd "<assignment-name>"
-#   - source ../grade_start ..
+#   - source ../bin/grade.bash
 #   - grade_start
 #   - pull_submission "<account>"
 #   - grade_submission "<account>"
@@ -93,9 +93,21 @@ function grade_start () {
   RUBRIC_FILE="${ASSIGNMENT_DIR}/key/grading_rubric"    
   MAKEFILE="${ASSIGNMENT_DIR}/key/makefile"
 
-  SUBMISSION_LOG=${ASSIGNMENT_DIR}/grading.log
+  DUE_DATE_FILE=${ASSIGNMENT_DIR}/due.date
+  GRADED_DATE_FILE=${ASSIGNMENT_DIR}/graded.date
+
+  GRADING_LOG=${ASSIGNMENT_DIR}/grading.log
   SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/roster.submissions
   NON_SUBMISSION_ROSTER=${ASSIGNMENT_DIR}/roster.non_submissions
+
+  # Check for key files
+
+  [[ ! -f ${RUBRIC_FILE} ]] && 
+     { echo "Rubric File Not Found: \"${RUBRIC_FILE}\"" ; return 1 ; }
+
+  # [[ ! -f  ]] &&
+  #  { echo "Due-date File Not Found: \"${DUEDATE_FILE}\"" ; return 1 ; }
+
 }
 
 # Student Related Files
@@ -103,7 +115,7 @@ ASSIGNMENT_FILE="assignment.md"                   # Contained within the student
 SUBMISSION_FILE="submission.md"                   # Contained within the student's repo
 STUDENT_ANSWER_KEY="answers.md"
 STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
-
+GRADED_TAG="graded"                               # Tag to identify version graded
 
 # Define the name of the terminal for interactive input and output
 terminal=$(tty)
@@ -117,32 +129,31 @@ terminal=$(tty)
 #   - a grade report is created, with the total points tallied
 #   - summary information is provided   
 function grade_submission () {
-  _user=${1}
-  _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_user}"
+  _student=${1}
+  _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
 
-  if [[ ! -f ${RUBRIC_FILE} ]] ; then
-     echo "Rubric File Not Found: \"${RUBRIC_FILE}\""
-     return 1
-  fi
+
   (
     echo "--------------" > $terminal
-    echo "Grading $_user" > $terminal
+    echo "Grading $_student" > $terminal
     if [[ ! -d $_dir ]] ; then
-      echo "User did not accept assignment"
-      printf "$_user: 0\n" >>${CLASS_GRADE_REPORT}
+      echo "\tStudent did not accept assignment"
+      printf "$_student: 0\n" >>${CLASS_GRADE_REPORT}
       return
     fi
 
     cd $_dir
-    git tag -f graded
+    git tag -f ${GRADED_TAG}
     if [[ -f ${MAKEFILE} ]] ; then
        make -f ${MAKEFILE}
     else
        if [[ ! -f ${SUBMISSION_FILE} ]] ; then
-         echo "No submission for the user"
-         printf "$_user: 0\n" >>${CLASS_GRADE_REPORT}
+         echo "\t No submission for the user"
+         printf "$_student: 0\n" >>${CLASS_GRADE_REPORT}
          { 
-           echo "# Grading summary for \"${ASSIGNMENT_NAME}\" assignment"
+           echo "# Grading Report"
+           echo "# Github Account: ${_student}"
+           echo "# Assignment: \"${ASSIGNMENT_NAME}\""
            echo 
            echo "Missing submission file: ${SUBMISSION_FILE}"
          }  >> ${STUDENT_GRADE_REPORT}
@@ -156,9 +167,11 @@ function grade_submission () {
     rm -f ${STUDENT_GRADE_REPORT}
     _score=0
     # Add the grad.report prologue
-    echo "Grading $_user" > $terminal
+    echo "Grading $_student" > $terminal
     { 
-      echo "# Grading summary for \"${ASSIGNMENT_NAME}\" assignment"
+      echo "# Grading Report"
+      echo "# Github Account: ${_student}"
+      echo "# Assignment: \"${ASSIGNMENT_NAME}\""
       echo 
     }  >> ${STUDENT_GRADE_REPORT}
   
@@ -178,24 +191,38 @@ function grade_submission () {
 
     # Print out final score
     { echo ; 
-      printf "$_user: $_score\n" ;
+      printf "$_student: $_score\n" ;
       echo ; 
     } > $terminal
-    printf "$_user: $_score\n" >>${CLASS_GRADE_REPORT}
+    printf "$_student: $_score\n" >>${CLASS_GRADE_REPORT}
   )
 }
 function grade_submissions () {
   touch ${CLASS_GRADE_REPORT}
-  ln -s ${CLASS_GRADE_REPORT} ${LOCAL_GRADE_REPORT} 
-  while read _user ; do
-    grade_submission ${_user}
+  ln -s ${CLASS_GRADE_REPORT} ${LOCAL_GRADE_REPORT} 2>/dev/null
+
+  {
+    echo "Grade Report: ${ASSSIGNMENT} $(date)"
+    echo
+  } >> ${CLASS_GRADE_REPORT}
+
+  while read _student ; do
+    grade_submission ${_student}
   done < ${SUBMISSION_ROSTER}
+
+  {
+    echo "-------------------------------------"
+    echo
+  } >> ${CLASS_GRADE_REPORT}
 }
 
 
 function reset_grading () {
-  [[ -f "${CLASS_GRADE_REPORT}" ]] && 
+  [[ -f "${CLASS_GRADE_REPORT}" ]] && {
     mv ${CLASS_GRADE_REPORT} ${CLASS_GRADE_REPORT}.$(date "+%Y:%m:%d:%H:%M")
+    mv ${SUBMISSION_ROSTER} ${SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
+    mv ${NON_SUBMISSION_ROSTER} ${NON_SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
+  }
   find ${SUBMISSION_DIR} -name ${STUDENT_GRADE_REPORT} -exec git rm -f {} \;
 }
 
@@ -205,20 +232,25 @@ function clone_submission () {
    _student="${1}"
 
    mkdir -p "$_dir"
-   git -C ${_dir} clone ${STUDENT_BASE_URL}-${_student}.git >> ${SUBMISSION_LOG} 2>&1
+   git -C ${_dir} clone ${STUDENT_BASE_URL}-${_student}.git >> ${GRADING_LOG} 2>&1
    if [ $? == 0 ] ; then
       echo "Cloned: ${_student}"
       echo ${_student} >> ${SUBMISSION_ROSTER}
    else
-      echo "No Submission: ${_student}" 1>&2
+      echo "Did not Accept Assignment: ${_student}" 1>&2
       echo ${_student} >> ${NON_SUBMISSION_ROSTER}
    fi
    # Note that if there is no submission for a student,
    # Subsequent operations that create files are in error
 }
 function clone_submissions () {
-  while read _user ; do
-    clone_submission ${_user}
+  { 
+    echo "-------------------"
+    echo "Cloning submissions: $(date)"
+
+  } >> ${GRADING_LOG} 2>&1
+  while read _student ; do
+    clone_submission ${_student}
   done < ${CLASS_ROSTER}
 }  
 
@@ -228,17 +260,22 @@ function pull_submission () {
    _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
 
    if [[ -d $_dir ]] ; then 
-     git -C ${_dir} pull >> ${SUBMISSION_LOG} 2>&1
+     git -C ${_dir} pull --no-edit >> ${GRADING_LOG} 2>&1
      if [ $? == 0 ] ; then
        echo "Pulled: ${_student}"
      else
-       echo "Error Pulling: ${_student}" 1>&2
+       echo "Error Pulling: ${_student}"
      fi 
    fi
 }
 function pull_submissions () {
-  while read _user ; do
-    pull_submission $_user
+  { 
+    echo "-------------------"
+    echo "Pulling submissions: $(date)"
+  } >> ${GRADING_LOG} 2>&1
+
+  while read _student ; do
+    pull_submission ${_student}
   done < ${SUBMISSION_ROSTER}
 }  
 
@@ -247,31 +284,35 @@ function publish_grade () {
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
 
   if [[ -d ${_dir} ]] ; then
-    git -C ${_dir} checkout main
+    git -C ${_dir} checkout main   >> ${GRADING_LOG} 2>&1
     if [[ -f ${ANSWER_FILE} ]] ; then
       {
         cp ${ANSWER_FILE} ${_dir}/.
         git -C ${_dir} add ${STUDENT_ANSWER_KEY}
         git -C ${_dir} commit -m 'Added Answers File' ${STUDENT_ANSWER_KEY}
-      } >> ${SUBMISSION_LOG} 2>&1
+      } >> ${GRADING_LOG} 2>&1
     fi
     {
       git -C ${_dir} add ${STUDENT_GRADE_REPORT}
       git -C ${_dir} commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
-    } >> ${SUBMISSION_LOG} 2>&1
+    } >> ${GRADING_LOG} 2>&1
 
-    git -C ${_dir} push --tags >> ${SUBMISSION_LOG} 2>&1
-    git -C ${_dir} push >> ${SUBMISSION_LOG} 2>&1
+    git -C ${_dir} push --mirror >> ${GRADING_LOG} 2>&1
     if [ $? == 0 ] ; then
-       echo "Published: ${_student}"
+       echo "Published (pushed): ${_student}"
     else
        echo "Error Pushing: ${_student}" 1>&2
     fi 
   fi
 }
 function publish_grades () {
-  while read _user  ; do
-    publish_grade $_user
+  { 
+    echo "-------------------"
+    echo "Publishing grades: $(date)"
+  } >> ${GRADING_LOG} 2>&1
+
+  while read _student  ; do
+    publish_grade ${_student}
   done < ${SUBMISSION_ROSTER}
 }  
 
@@ -286,8 +327,8 @@ function _checkout_date () {
 
 function checkout_date () {
   _date=${1}
-  while read _user ; do
-    check_version $_date $_user 
+  while read _student ; do
+    check_version ${_date} ${_student} 
   done < ${SUBMISSION_ROSTER}
 }  
 
