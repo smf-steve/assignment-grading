@@ -146,7 +146,6 @@ function grade_submission () {
   _student=${1}
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
 
-
   (
     echo "--------------" > $terminal
     echo "Grading $_student" > $terminal
@@ -317,29 +316,20 @@ function publish_grade () {
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}
 
   if [[ -d ${_dir} ]] ; then
-    git -C ${_dir} checkout main   >> ${GRADING_LOG} 2>&1
-    if [[ -f ${ANSWER_FILE} ]] ; then
-      {
+    ( cd ${_dir} 
+      git checkout main
+      if [[ -f ${ANSWER_FILE} ]] ; then
         cp ${ANSWER_FILE} ${_dir}/.
-        git -C ${_dir} add ${STUDENT_ANSWER_KEY}
-        git -C ${_dir} commit -m 'Added Answers File' ${STUDENT_ANSWER_KEY}
-      } >> ${GRADING_LOG} 2>&1
-    fi
-    {
-      git -C ${_dir} add ${STUDENT_GRADE_REPORT}
-      git -C ${_dir} commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
-    } >> ${GRADING_LOG} 2>&1
+        git add ${STUDENT_ANSWER_KEY}
+        git commit -m 'Added Answers File' ${STUDENT_ANSWER_KEY}
+      fi
+      git add ${STUDENT_GRADE_REPORT}
+      git commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
+      git push --mirror
+      return_value="$?"
+    ) >> ${GRADING_LOG} 2>&1
 
-    if [[ -f ${_dir}/${STUDENT_GRADE_CHECKOUT} ]] ; then
-      {
-        git -C ${_dir} add ${STUDENT_GRADE_CHECKOUT}
-        git -C ${_dir} commit -m 'Added Student Grade Checkout File' ${STUDENT_GRADE_CHECKOUT}
-      } >> ${GRADING_LOG} 2>&1
-    fi
-
-
-    git -C ${_dir} push --mirror >> ${GRADING_LOG} 2>&1
-    if [ $? == 0 ] ; then
+    if [ ${return_value} == 0 ] ; then
        echo "Published (pushed): ${_student}"
     else
        echo "Error Pushing: ${_student}" 1>&2
