@@ -66,14 +66,17 @@ GRADING_ENV="${ASSIGNMENT_GRADING_DIR}/.grading.env"
 source ${GRADING_ENV}
 
 # grade_start must be called at the top-level directory of a particular assignment
+# If not started then the error miessage is
+# -bash: ${SUBMISSION_ROSTER}: ambiguous redirect
+
 function grade_start () {
+
   # CLASSROOM_DIR="${PWD}/../.."
   # GRADING_SCRIPT="${CLASSROOM_DIR}/bin/grade.bash" 
   # source ${GRADING_SCRIPT}
   source ${GRADING_ENV}
 
   # By virtual of sourcing the GRADING_ENV, the ASSIGNMENT_DIR is defined
-  echo "Starting the grading for:" ${ASSIGNMENT_NAME}
   # If there is a per-assignment grading.env file, override the class defaults
   if [[ -f "${ASSIGNMENT_DIR}/grading.env" ]] ; then
     ASSIGNMENT_ENV="${ASSIGNMENT_DIR}/grading.env"
@@ -108,6 +111,16 @@ function grade_start () {
   # [[ ! -f  ]] &&
   #  { echo "Due-date File Not Found: \"${DUEDATE_FILE}\"" ; return 1 ; }
 
+  echo "Starting the grading for:" ${ASSIGNMENT_NAME}
+  { 
+    echo
+    echo "-------------------"
+    echo "Starting the Grading Process:"
+    echo "  Assignment:" ${ASSIGNMENT_NAME}
+    echo "  Date:" $(date)
+    echo
+  } >> ${GRADING_LOG}
+
 }
 
 # Student Related Files
@@ -115,6 +128,7 @@ ASSIGNMENT_FILE="assignment.md"                   # Contained within the student
 SUBMISSION_FILE="submission.md"                   # Contained within the student's repo
 STUDENT_ANSWER_KEY="answers.md"
 STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
+STUDENT_GRADE_CHECKOUT="grade.checkout"           # The git commit line associated with the graded checkout
 GRADED_TAG="graded"                               # Tag to identify version graded
 
 # Define the name of the terminal for interactive input and output
@@ -144,6 +158,11 @@ function grade_submission () {
 
     cd $_dir
     git tag -f ${GRADED_TAG}
+
+    ## But if there is a MAKEFILE and NO submission file... then there is a problem.
+    ## The problem is that the grade report
+    ### it is presumed that if there is Makefile, it is NOT a paper report
+    
     if [[ -f ${MAKEFILE} ]] ; then
        make -f ${MAKEFILE}
     else
@@ -162,11 +181,15 @@ function grade_submission () {
          make -f ${CLASS_MAKEFILE} paper_grade
        fi
     fi
+    # Note there is a return in the code block above.
+    # Hence, flow might not get here
 
+
+    # The follow only performs the process to prompt the prof for scores related to the rubric
     # Prompt the Professor for the stuff required for the grading rubric
     rm -f ${STUDENT_GRADE_REPORT}
     _score=0
-    # Add the grad.report prologue
+    # Add the grade.report prologue
     echo "Grading $_student" > $terminal
     { 
       echo "# Grading Report"
@@ -202,7 +225,7 @@ function grade_submissions () {
   ln -s ${CLASS_GRADE_REPORT} ${LOCAL_GRADE_REPORT} 2>/dev/null
 
   {
-    echo "Grade Report: ${ASSSIGNMENT} $(date)"
+    echo "Grade Report: ${ASSIGNMENT_NAME} $(date)"
     echo
   } >> ${CLASS_GRADE_REPORT}
 
@@ -228,30 +251,40 @@ function reset_grading () {
 
 
 function clone_submission () {
-   _dir="${SUBMISSION_DIR}"
    _student="${1}"
 
-   mkdir -p "$_dir"
-   git -C ${_dir} clone ${STUDENT_BASE_URL}-${_student}.git >> ${GRADING_LOG} 2>&1
-   if [ $? == 0 ] ; then
-      echo "Cloned: ${_student}"
-      echo ${_student} >> ${SUBMISSION_ROSTER}
-   else
-      echo "Did not Accept Assignment: ${_student}" 1>&2
-      echo ${_student} >> ${NON_SUBMISSION_ROSTER}
+   if [[ -d ${ASSIGNMENT_NAME}-${_student} ]] ; then
+      echo "Previously Cloned: ${_student}"
+   else 
+     git clone ${STUDENT_BASE_URL}-${_student}.git >> ${GRADING_LOG} 2>/dev/null
+     if [ $? == 0 ] ; then
+        echo "Cloned: ${_student}"
+        echo ${_student} >> ${SUBMISSION_ROSTER}
+     else
+        echo "Did Not Accept Assignment: ${_student}" 1>&2
+        echo ${_student} >> ${NON_SUBMISSION_ROSTER}
+     fi
    fi
    # Note that if there is no submission for a student,
    # Subsequent operations that create files are in error
 }
 function clone_submissions () {
-  { 
-    echo "-------------------"
-    echo "Cloning submissions: $(date)"
+  _dir="${SUBMISSION_DIR}"
+  mkdir -p "$_dir"
 
-  } >> ${GRADING_LOG} 2>&1
-  while read _student ; do
-    clone_submission ${_student}
-  done < ${CLASS_ROSTER}
+  ( cd $_dir
+    { 
+      echo
+      echo "-------------------"
+      echo "Cloning Submissions:"
+      echo "  Date:" $(date)
+      echo
+    } >> ${GRADING_LOG}
+
+    while read _student ; do
+      clone_submission ${_student}
+    done < ${CLASS_ROSTER}
+  )
 }  
 
 
@@ -281,7 +314,7 @@ function pull_submissions () {
 
 function publish_grade () {
   _student=${1}
-  _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
+  _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}
 
   if [[ -d ${_dir} ]] ; then
     git -C ${_dir} checkout main   >> ${GRADING_LOG} 2>&1
@@ -296,6 +329,14 @@ function publish_grade () {
       git -C ${_dir} add ${STUDENT_GRADE_REPORT}
       git -C ${_dir} commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT}
     } >> ${GRADING_LOG} 2>&1
+
+    if [[ -f ${_dir}/${STUDENT_GRADE_CHECKOUT} ]] ; then
+      {
+        git -C ${_dir} add ${STUDENT_GRADE_CHECKOUT}
+        git -C ${_dir} commit -m 'Added Student Grade Checkout File' ${STUDENT_GRADE_CHECKOUT}
+      } >> ${GRADING_LOG} 2>&1
+    fi
+
 
     git -C ${_dir} push --mirror >> ${GRADING_LOG} 2>&1
     if [ $? == 0 ] ; then
@@ -316,31 +357,59 @@ function publish_grades () {
   done < ${SUBMISSION_ROSTER}
 }  
 
-function _checkout_date () {
+function checkout_date () {
   _date=${1}
   _student=${2}
 
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
-  _hash=$(git rev-list -1 --until="${_date}" main)
-  git -C ${_dir} checkout ${_hash}
+  (
+    cd $_dir
+    { 
+      _hash=$(git rev-list -1 --until="${_date}" main)
+      echo "Grade as of Date: ${_date}"
+      echo
+      git checkout ${_hash}  2>&1
+      echo                              
+      git log --decorate=full -1 $_hash 
+    } > ${STUDENT_GRADE_CHECKOUT}
+  )
 }
 
-function checkout_date () {
+function checkout_due_date () {
   _date=${1}
+  [[ -z ${_date} ]] && [[ -f due.date ]] && _date="$(cat due.date)"
+
+  [[ -z ${_date} ]] && return
+  
+  { 
+    echo "-------------------"
+    echo "Checking out Version based upon date: ${_date}"
+  } >> ${GRADING_LOG} 2>&1
+
   while read _student ; do
-    check_version ${_date} ${_student} 
+    checkout_date "${_date}" ${_student} 
   done < ${SUBMISSION_ROSTER}
 }  
 
 
 
-function update_all () {
+function apply_all () {
   CMD="$*"
+  { 
+    echo
+    echo "-------------------"
+    echo "Apply the following command within each Student Repo"
+    echo "  Command:" $CMD
+    echo
+  } >> ${GRADING_LOG}
+
   while read _student  ; do
     _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
-    pushd ${_dir} 2>/dev/null
-    eval $CMD
-    popd 2>/dev/null
+    (
+      cd ${_dir}
+      basename $(pwd)
+      eval $CMD
+    ) 
   done < ${SUBMISSION_ROSTER}
 } 
 
