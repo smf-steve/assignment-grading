@@ -30,7 +30,7 @@
 #   - grade_start
 #   - reset_grading (optional)
 #   - clone_submissions
-#   - pull_submssions
+#   - pull_submissions
 #   - grade_submissions
 #   - publish_grades
 #   * record the grades: "insert grades.<assignment>.csv" into the master spreadsheet
@@ -41,7 +41,8 @@
 #   - source ../bin/grade.bash
 #   - grade_start
 #   - pull_submission "<account>"
-#   - grade_submission "<account>"
+#   - grade_submission "<account>" [ commit ]
+#   - regrade_submission "<account>" [ commit ]
 #   - publish_grades "<account>"
 #   * update the individual grade within the master spreadsheet
 #
@@ -153,8 +154,23 @@ terminal=$(tty)
 #     - the prof is prompted for a score followed by an optional comment
 #   - a grade report is created, with the total points tallied
 #   - summary information is provided   
+function regrade_submission () {
+  _student=${1}
+  _commit=${2}
+
+  _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
+  ( 
+    cd $_dir  
+    mv ${CLASS_GRADE_REPORT} ${CLASS_GRADE_REPORT}.$(date "+%Y:%m:%d:%H:%M")
+  )
+  grade_submission "$_student" "$_commit"
+}
+
+
 function grade_submission () {
   _student=${1}
+  _commit=${2}
+
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
 
   (
@@ -171,11 +187,13 @@ function grade_submission () {
     cd $_dir
     source "${GIT_STATISTICS_BASH}"
 
-    if [[ -n "${SUBMISSION_HASH}" ]] ; then 
-       git checkout ${SUBMISSION_HASH} 
-    else
-       git checkout ${ACCEPT_HASH}
-    fi
+    # Checkout the version to be graded.  Either
+    #  - they did not effectively submit something
+    #  - they have a submission based upon due_date, etc
+    #  - a specific commit hash was provided.
+    git checkout ${ACCEPT_HASH}
+    [[ -n "${SUBMISSION_HASH}" ]] && git checkout ${SUBMISSION_HASH}
+    [[ -n "${_commit}" ]] && get checkout ${_commit}
 
     git tag -f ${GRADED_TAG}
 
