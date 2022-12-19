@@ -68,6 +68,13 @@ export GIT_STATISTICS_BASH="${ASSIGNMENT_GRADING_DIR}/bin/git.statistics.bash"
 
 source ${GRADING_ENV}
 
+
+function cat_nocomment () {
+
+  sed -e '/^ *#/d' "$@"
+}
+
+
 # grade_start must be called at the top-level directory of a particular assignment
 # If not started then the error miessage is
 # -bash: ${SUBMISSION_ROSTER}: ambiguous redirect
@@ -470,7 +477,7 @@ function checkout_date () {
 ## Following is now defunct due to timelime due.date information
 function checkout_due_date () {
   _date=${1}
-  [[ -z ${_date} ]] && [[ -f due.date ]] && _date="$(cat due.date)"
+  [[ -z ${_date} ]] && [[ -f due.date ]] && _date="$(cat_nocomment due.date)"
 
   [[ -z ${_date} ]] && return
   
