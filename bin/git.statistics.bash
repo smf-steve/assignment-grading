@@ -6,9 +6,9 @@ trap 'rm .$$_full.log' 0
 # timelimit="2H"  # 120M
 # grace_period="2M"   # 2 minutes
 
-RELEASE_DATE_FILE="${ASSIGNMENT_DIR}/release.date"
-DUE_DATE_FILE="${ASSIGNMENT_DIR}/due.date"
-TIME_LIMIT_FILE="${ASSIGNMENT_DIR}/timelimit"
+RELEASE_DATE_FILE="${ASSIGNMENT_DIR}/release_date"
+DUE_DATE_FILE="${ASSIGNMENT_DIR}/due_date"
+TIME_LIMIT_FILE="${ASSIGNMENT_DIR}/time_limit"
 GRACE_PERIOD_FILE="${ASSIGNMENT_DIR}/grace_period"
 
 STUDENT_STAT_REPORT="statistics.report"
