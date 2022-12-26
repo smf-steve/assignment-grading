@@ -1,0 +1,4 @@
+# Set a date when the assignment is due
+# For example, 1 minute before midnight on Sept 20
+# Date format: "+%b %d %T"
+Sept 20 23:59:00

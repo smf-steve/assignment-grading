@@ -1,0 +1,4 @@
+# If this is a timed assignment, you can provide a time value.
+# The last valid commit must be made by "accept-time + time-value"
+# Value format: "value[ymwdHMS]", a 2 hour exam
+120M
