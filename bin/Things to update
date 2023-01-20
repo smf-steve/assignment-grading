@@ -1,4 +1,19 @@
-grade-assignment project
+Things to update
+1. (done) update {CLASS_GRADE_REPORT}
+   - comment the extra stuff
+   - rename *.log
+
+1. rename cat-nocomment to cat-nocomments
+1. document and unify the naming of
+  release_date&
+  due_date
+  time_limit
+  grace_period
+
+1. rname functions to indicate which are internal  
+   - _name
+   - name_i
+   - function name {   # Internal
 
 8. Test 
   Maybe the grade process is to
@@ -74,10 +89,7 @@ grade.bash
 -- make grading branch..
    -- merge at end.
 
-
--- need way auto to zero for 1 commit
--- need way to 
-
+make error message relative
 -- need better way to provide prompting of rubric.grading
 
 
@@ -93,3 +105,58 @@ pregrade..
          -- <!-- >   < less than some many updates as a percentage?
          
   -- need a way to have zero commits
+
+function create_grading_dir () {
+function create_assignment () {
+function grade_start () {
+function regrade_submission () {
+function grade_submission () {
+function grade_submissions () {
+function reset_grading () {
+function clone_submission () {
+function clone_submissions () {
+function pull_submission () {
+function pull_submissions () {
+function publish_grade () {
+function publish_grades () {
+function grade_join () {
+function grades2csv () {
+function all_grades2csv () {
+function checkout_date () {
+function checkout_due_date () {
+function apply_all () {
+
+
+# Primary Grading Related Functions
+  function reset_grading () {
+  function grade_start () {
+  function clone_submissions () {
+  function pull_submissions () {
+  function grade_submissions () {
+  function publish_grades () {
+  function apply_all () {
+
+# Individual and Specialize Grading Related Fuctions
+  function clone_submission () {
+  function pull_submission () {
+
+  function regrade_submission () {
+  function grade_submission () {
+  function publish_grade () {
+
+  function checkout_date () {
+  function checkout_due_date () {
+
+
+
+# Setup Relarted Functions
+  create_grading_dir  : used once per class
+  create_assignment   : used once per assignment
+
+
+# Grading Report Related Functions
+  function grade_join () {
+  function grades2csv () {
+  function all_grades2csv () {
+
+
