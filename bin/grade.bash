@@ -21,78 +21,77 @@
 # Process:
 #
 #   Prerequisites:  (See the process.md file)
-#     mkdir $HOME/bin
-#     cp grade.bash git.statistics.bash $HOME/bash
-#     Add the following line to (e.g.,) $HOME/.profile
-#       - bin/grade.bash
-#     For each class:
-#       - create a github classroom
-#       - cd to the parent directory for the classroom
-#       - run the command `create_assignments_dir <classroom>` 
-#     For each assignment
-#       - create an assignment template repository
-#       - create an assignment solution repository
-#       - cd to the classroom assignment_grading directory:
-#       - run the command `create_assignment <classroom> <assignment>` 
+#     - mkdir $HOME/bin
+#     - cp grade.bash git.statistics.bash $HOME/bin
+#     - Add the following line to (e.g.,) $HOME/.profile
+#       * source $HOME/bin/grade.bash
 #
+#   For each class:
+#     - create a github classroom
+#     - create a directory for the class
+#     - cd to the class directory
+#     - run the command `create_assignments_dir <github classroom>` 
 #
-#   Setup Processes
-#   #- cd ${CLASSROOM_DIR}/assignment_grading
-#   #- make a directory for the assignment :  cd nn-assignment-name
-#   - clone the assignment-solution repository into the ``key`` directory
+#   For each assignment
+#     - create an assignment template repository
+#     - create an assignment solution repository (optional)
+#     - cd to the classroom assignment_grading directory:
+#     - run the command `create_assignment <xx-assignment>` 
 #
-#   Grading Process
-#   #- source ../bin/grade.bash ${CLASSROOM_DIR}
-#   - create_assignment "<nn-assignment-name>"
-#   - cd <nn-assignment-name>
-#   - grade_start
-#   - reset_grading (optional)
-#   - clone_submissions
-#   - pull_submissions
-#   - grade_submissions
-#   - publish_grades
-#   * record the grades: "insert grades.<assignment>.csv" into the master spreadsheet
-#   - grades_log2csv: convert the log file into a .csv file for integration
-
-# Assignment re-grading of single student process
-#   - cd "<assignment-name>"
-#   - grade_start
-#   - pull_submission "<account>"
-#   - grade_submission "<account>" [ commit ]
-#   - regrade_submission "<account>" [ commit ]
-#   - publish_grades "<account>"
-#   * update the individual grade within the master spreadsheet
+#   For grading an assignment
+#     - cd <xx-assignment>
+#     - grade_start
+#     - reset_grading (optional)
+#     - clone_submissions
+#     - pull_submissions
+#     - grade_submissions
+#     - publish_grades
 #
+#   For re/grade a single student
+#     - cd "<xx-assignment>"
+#     - grade_start
+#     - pull_submission "<account>"
+#     - grade_submission "<account>" [ commit ]
+#     # - regrade_submission "<account>" [ commit ]
+#     - publish_grade "<account>"
+#
+#   For grade incorporation
+#     - review/update the grades in grades.<xx-assignment>.txt, e.g., regrades
+#     - cd <assignment-grading> grades_log2csv 
+#       - convert the log file into a .csv file for integration
+#     * record the grades: "insert grades.<assignment>.csv" into the master spreadsheet
 #############################################################
+
 export GRADING_SCRIPT="${HOME}/bin/grade.bash"  # This is the name of this particular script 
 export GIT_STATISTICS_BASH="${HOME}/bin/git.statistics.bash"
 
 
-## Usage: 
-##    source $path/bin/grade.bash CLASSROOM_DIR
-##      - CLASSROOM_DIR is set as defined
-##    source $path/bin/grade.bash
-##      - If CLASSROOM_DIR is unset, then set it to $cwd/../..
-##      - I.e., it assumed that the script was invoked in:
-##        ${CLASSROOM_DIR}/assignment_grading/nn-assignment-name
+#############################################################
+# The next two functions create the grading.env and assignment.env files.
+# These files assign all the relative defaults for each assignment.
+#
+# To make global changes to these defaults,
+#   - update the "here-documents" within these functions.
+#
+# To make local changes to these defaults,
+#   - update the special "grading.env" and/or "assignment.env"
+#############################################################
 
-# Normalize the file path
-# if [[ -n $1 ]] ; then
-#   [[ -d $1 ]] && CLASSROOM_DIR=$( cd $1 ; pwd )
-# fi
-# [[ -z ${CLASSROOM_DIR} ]] && CLASSROOM_DIR=$( cd ../.. ; pwd )
-# 
-
-
-
-# This function creates a template .env file for the assignment-grading process.
-# The template .env file is used to create individual assignment .env
-#   - to make a global change for all assignment-grading process
-#     - modify either this function, or the resulting .env
-#   - to make a local change for just one assignment, modify the assignment.env
-#     within the individul assignment director
 function create_grading_env () {
-  CLASSROOM="${1}"
+  GITHUB_CLASSROOM="${1}"
+
+  if [[ -z "${GITHUB_CLASSROOM}" ]] ; then 
+    echo "Usage:"
+    echo "    create_grading_env <github classroom>"
+    echo ""
+    return 1
+  fi
+
+  if [[ -z "${ASSIGNMENT_GRADING_DIR}" || -z "${GRADING_ENV}" ]] ; then
+    echo "Error: Key environments are not set"
+    return 2
+  fi
+
   cat <<EOF
 
 ##################################
@@ -115,7 +114,6 @@ export CLASS_MAKEFILE="\${ASSIGNMENT_GRADING_DIR}/makefile"
 export CLASS_GRADE_REPORT="\${ASSIGNMENT_GRADING_DIR}/grades.\${ASSIGNMENT_NAME}.txt"
 
 
-
 ##################################
 ## RELATIVE ENV VARIABLES
 # Student Related Files
@@ -128,13 +126,12 @@ STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's
 STUDENT_STAT_REPORT="statistics.report"           # To be added to the student's repo
 STUDENT_GRADE_CHECKOUT="grade.checkout"           # The git commit line associated with the graded checkout
 
-
 ## GRADING RELATED VARIABLES
 GRADED_TAG="graded"                               # Tag to identify version graded
 GRADING_BRANCH="grading"
 
 GRADING_EDITOR="subl"
-#GRADING_EDITOR="${LAUNCH_COMMAND} /Applications/Sublime Text.app"
+#GRADING_EDITOR="\${LAUNCH_COMMAND} /Applications/Sublime Text.app"
 
 RESPONSE_TAG='<!-- response -->'
   # The standardize tag to "grep" for within the student's submission to locate just the responses to review
@@ -150,7 +147,6 @@ function create_assignment_env () {
 
 cat ${GRADING_ENV} 
 cat  <<EOF
-
 ##################################
 ## ASSIGNMENT BASED ENV VARIABLES
   # The name of the template repository must match the name of the assignment
@@ -159,7 +155,6 @@ export ASSIGNMENT_DIR="\${PWD}"
 export ASSIGNMENT_NAME="\$(basename \$PWD)"
 export ASSIGNMENT_ID=\$( sed 's/^\(..\).*$/\1/' <<< \${ASSIGNMENT_NAME})
 
-
 # Assignment Specific Information
 ########################################################
 RELEASE_DATE_FILE="\${ASSIGNMENT_DIR}/release_date"
@@ -167,7 +162,6 @@ DUE_DATE_FILE="\${ASSIGNMENT_DIR}/due_date"
 TIME_LIMIT_FILE="\${ASSIGNMENT_DIR}/time_limit"
 GRACE_PERIOD_FILE="\${ASSIGNMENT_DIR}/grace_period"
 
-# The following environment variables need to be set somewhere
   STUDENT_BASE_URL=\${GITHUB_PREFIX}/\${ASSIGNMENT_NAME}
 
   # Assignment Based Files
@@ -215,14 +209,18 @@ function create_grading_dir () {
 
   mkdir ${ASSIGNMENT_GRADING_DIR}
   create_grading_env ${GITHUB_CLASSROOM} > ${GRADING_ENV}
+  create_assignment xx-sample-assignment
 }
 
 # This function presumes that you location is
 #  $HOME/.../<class>/assignment-grading/.
 function create_assignment () {
   ASSIGNMENT_DIR="${1}"
+
   ASSIGNMENT_GRADING_DIR="${PWD}"
-  
+  GRADING_ENV="${ASSIGNMENT_GRADING_DIR}/grading.env"
+
+
   if [[ "assignment-grading" != "$(basename ${PWD})" ]] ; then
     echo "Usage:"
     echo "   cd <assignment grading directory>"
@@ -248,7 +246,7 @@ function create_assignment () {
   # What is in the file
 
   mkdir ${ASSIGNMENT_DIR}
-  ASSIGNMENT_ENV="assignment.env"
+  ASSIGNMENT_ENV="assignment.env"  
   create_assignment_env > ${ASSIGNMENT_DIR}/${ASSIGNMENT_ENV}
     {
       cd ${ASSIGNMENT_DIR};
@@ -259,7 +257,7 @@ function create_assignment () {
   mkdir ${KEY_DIR}
   mkdir ${SUBMISSION_DIR}
   touch ${LOCAL_GRADE_REPORT}
-  ln -s ${CLASS_GRADE_REPORT} ${LOCAL_GRADE_REPORT} 2>/dev/null
+  ln    ${LOCAL_GRADE_REPORT} ${CLASS_GRADE_REPORT} 
   touch ${RELEASE_DATE_FILE}
   touch ${DUE_DATE_FILE}
   touch ${TIME_LIMIT_FILE}
@@ -268,22 +266,16 @@ function create_assignment () {
 }
 
 
-# The following function is called by all subsequent functions to ensure
-# environment variables are consistent with our current grading location
 function grade_start () {
-
-  # 1. check our that we are in the correct location
-  # 2. check our environment location
-  # 3. if different, then resource the correct enviornment
-
-  if [[ "${PWD}" != "${ASSIGNMENT_DIR}" ]] ; then
-    if [[ ! -f "${ASSIGNMENT_ENV}" ]] ; then
-      echo "Usage:  cd <assignment_dir> ; grade_start"
-      return 1
-    fi
-    source ${ASSIGNMENT_ENV}
-    terminal=$(tty)
+  # 1. Validate we are in an assignment-directory
+  # 2. Source the assignment.env
+  # 3. Startup for grading
+  if [[ ! -f assignment.env ]] ; then
+    echo "Usage:  cd <assignment_dir> ; grade_start"
+    return 1
   fi
+  source assignment.env
+  terminal=$(tty)
 
   # Rerun these commands, in case of any updates after the initial `grade_start` is executed
   RELEASE_DATE="Not Defined"
@@ -304,14 +296,16 @@ function grade_start () {
 
   # Check for key files
   [[ ! -f ${KEY_RUBRIC_FILE} ]] && {
-     _l=$(sed "s|${ASSIGNMENT_GRADING_DIR}/||" <<< ${KEY_RUBRIC_FILE} )
-     echo 
+     _l=$(relative_filename "${KEY_RUBRIC_FILE}" )
      echo "Warning: Rubric File Not Found: \"${_l}\"" ;  
   }
 
 }
 
-
+function relative_filename() {
+  _base=${ASSIGNMENT_GRADING_DIR}
+  sed "s|${_base}/||" <<< ${1}
+}
 
 
 # Grading Method: 
@@ -472,9 +466,6 @@ function grade_submission () {
 }
 function grade_submissions () {
   _grading_count=0
-  touch ${CLASS_GRADE_REPORT}
-  ln -s ${CLASS_GRADE_REPORT} ${LOCAL_GRADE_REPORT} 2>/dev/null
-
   {
     echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
   } >> ${CLASS_GRADE_REPORT}
@@ -508,7 +499,7 @@ function clone_submission () {
       echo "Previously Cloned -- pulling: ${_student}"
       pull_submission $_student
    else 
-     git clone ${STUDENT_BASE_URL}-${_student}.git >> ${GRADING_LOG} 2>/dev/null
+     git -C ${SUBMISSION_DIR} clone ${STUDENT_BASE_URL}-${_student}.git >> ${GRADING_LOG} 2>/dev/null
      if [ $? == 0 ] ; then
         echo "Cloned: ${_student}"
         echo ${_student} >> ${SUBMISSION_ROSTER}
@@ -517,26 +508,21 @@ function clone_submission () {
         echo ${_student} >> ${NON_SUBMISSION_ROSTER}
      fi
    fi
-   # Note that if there is no submission for a student,
-   # Subsequent operations that create files are in error
 }
 function clone_submissions () {
-  _dir="${SUBMISSION_DIR}"
-  mkdir -p "$_dir"
 
-  ( cd $_dir
-    { 
-      echo
-      echo "-------------------"
-      echo "Cloning Submissions:"
-      echo "  Date:" $(date)
-      echo
-    } >> ${GRADING_LOG}
+  { 
+    echo
+    echo "---------------------"
+    echo "Cloning Submissions:"
+    echo "  Date:" $(date)
+    echo
+  } >> ${GRADING_LOG}
 
-    while read _student ; do
-      clone_submission ${_student}
-    done < ${CLASS_ROSTER}
-  )
+  while read _student ; do
+    clone_submission ${_student}
+  done < ${CLASS_ROSTER}
+  
 }  
 
 
@@ -544,8 +530,8 @@ function pull_submission () {
    _student=${1}
    _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
 
-   if [[ -d $_dir ]] ; then 
-     git -C ${_dir} pull --no-edit >> ${GRADING_LOG} 2>&1
+   if [[ -d "${_dir}" ]] ; then 
+     git -C "${_dir}" pull --no-edit >> ${GRADING_LOG} 2>&1
      if [ $? == 0 ] ; then
        echo "Pulled: ${_student}"
      else
@@ -568,8 +554,9 @@ function publish_grade () {
   _student=${1}
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}
 
-  if [[ -d ${_dir} ]] ; then
-    ( cd ${_dir} 
+  if [[ -d "${_dir}" ]] ; then
+    ( 
+      cd ${_dir} 
       if [[ -f ${KEY_ANSWER_FILE} ]] ; then
         cp ${KEY_ANSWER_FILE} ${_dir}/.
         git add ${STUDENT_ANSWER_KEY}
@@ -584,8 +571,10 @@ function publish_grade () {
       return_value="$?"
       if [[ ${return_value} == 0 ]] ; then
         echo "Published (pushed): ${_student}" >$terminal
+        echo "Published (pushed): ${_student}"
       else
         echo "Error Pushing: ${_student}"  >$terminal
+        echo "Error Pushing: ${_student}"
       fi 
     ) >> ${GRADING_LOG} 2>&1
   fi
@@ -636,7 +625,7 @@ function grades2csv () {
        #  The "join" on RedHat does not allow hypens in the key 
        grade_join ${CLASS_ROSTER} $_base.prep >$_base.csv
      fi
-     #rm $_base.prep
+     rm $_base.prep
 }
 
 
@@ -689,7 +678,7 @@ function checkout_due_date () {
 
 
 function apply_all () {
-  CMD="$*"
+  _CMD="$*"
   { 
     echo
     echo "-------------------"
@@ -702,8 +691,8 @@ function apply_all () {
     _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
     (
       cd ${_dir}
-      basename $(pwd)
-      eval $CMD
+      basename ${PWD}
+      eval ${_CMD}
     ) 
   done < ${SUBMISSION_ROSTER}
 } 
@@ -711,5 +700,5 @@ function apply_all () {
 
 function cat_nocomment () {
 
-  sed -e '/^ *#/d' "$@"
+  sed -e '/^ *#.*$//'  -e '/^ *$/d' "$@"
 }

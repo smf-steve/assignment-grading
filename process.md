@@ -28,7 +28,7 @@ The following example shows how I installed the software for my COMP122 class.
      awk -F, '{print $2}' classroom_roster.csv | sed -e '1d' -e 's/"//g' > roster
      ```
 
-## Assignment Creation Process:
+## Assignment Creation Process within GitHub / GitHub Classrooms
   * Create an Assignment-Template Repository
      1. Create an repository with your GitHub Organization.
      1. Add, at least, the following files to that repository:
@@ -47,30 +47,37 @@ The following example shows how I installed the software for my COMP122 class.
   * Create an Assignment-Solution Repository
      1. Create an private repository based upon the assignment template.
      2. Add, at least, the following files to that repository:
-        - ``answers.md``
-        - ``grading.rubric``
-        - ``makefile``: (optional): to address non-paper submissions
-        - ``grading.env``: (optional) to override defaults
+        - `answers.md`
+        - `grading.rubric`
+        - `makefile`: (optional): to address non-paper submissions
+        - `grading.env`: (optional) to override defaults
 
 
 ## Assignment Setup Process:
- 1. Create a directory for the assignment within the ``assignment_grading/`` directory.  The name of the directory must match the GitHub Classroom assignment prefix. For example:
+ 1. Create a directory for the assignment within the `assignment_grading/` directory.  The name of the directory must match the GitHub Classroom assignment prefix. For example:
+    ```
+    create_assignment nn-assignment-name
+    ```
 
+    - A directory called submissions is created that contains all of the student submissions, and
+      * submissions.log: a log of all git commands performed during the grading process.
+      * roster: a list of students that have accepted the assignment
+      * non_submission.roster: a list of students that have accepted the assignment
+
+    
     ```
     cd ~/comp122/assignment_grading
     mkdir nn-assignment-name
     ```
 
- 1. Clone the assignment-solution repository into the ``key`` directory
+ 1. Clone the assignment-solution repository into the `key` directory
      ```
      cd nn-assignment-name
      git clone git@github.com:COMP122/assignment-name.git key
-     cd 01-assignment
      ```
-    - A directory called submissions is created that contains all of the student submissions, and
-      * submissions.log: a log of all git commands performed during the grading process.
-      * roster: a list of students that have accepted the assignment
-      * non_submission.roster: a list of students that have accepted the assignment
+
+
+1. Run the command to create the assigment
 
 
 ## Grading and Review Process
@@ -81,24 +88,24 @@ The following example shows how I installed the software for my COMP122 class.
      ```
 
   1. Source the grade.bash file:
-     - ``source ../bin/grade.bash``  
+     - `source ../bin/grade.bash`  
 
   1. Execute various CLI commands within the assignment directory
-     1. ``grade_start``: to start the grading process, which reasserts the environment variables
-     1. ``clone_submissions``: to obtain a copy of all the student's files
-     1. ``pull_submissions``: to obtain a fresh copy of all the student's files
-     1. ``grade_submissions``: to grade all the student's submissions
-     1. ``publish_grades``: to publish the grades for all students
-  1. Review class grades contained within ``../grades.nn-assignment``
+     1. `grade_start`: to start the grading process, which reasserts the environment variables
+     1. `clone_submissions`: to obtain a copy of all the student's files
+     1. `pull_submissions`: to obtain a fresh copy of all the student's files
+     1. `grade_submissions`: to grade all the student's submissions
+     1. `publish_grades`: to publish the grades for all students
+  1. Review class grades contained within `../grades.nn-assignment`
   1. Update the master grade spreadsheet for all students
 
 ## Regrading a Single Student's Submission
-  1. ``cd ~/comp122/assignment_grading/nn-assignment``
-  1. ``grade_start``: to start the grading process, which reasserts the environment variables
-  1. ``clone_submission student``: to obtain a copy of the student's files
-  1. ``pull_submission student``: to pull the student's repo for possible updates
-  1. ``grade_submission student``: to grade student's submission
-  1. ``publish_grade student``: to publish the student's grad
-  1. Review updated grades append to ``../grades.nn-assignment``
+  1. `cd ~/comp122/assignment_grading/nn-assignment`
+  1. `grade_start`: to start the grading process, which reasserts the environment variables
+  1. `clone_submission student`: to obtain a copy of the student's files
+  1. `pull_submission student`: to pull the student's repo for possible updates
+  1. `grade_submission student`: to grade student's submission
+  1. `publish_grade student`: to publish the student's grad
+  1. Review updated grades append to `../grades.nn-assignment`
   1. Update the individual grade within the master grade spreadsheet
 

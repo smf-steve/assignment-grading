@@ -58,33 +58,22 @@ To faciliate the grading process, a single directory (per class) is created.  As
   * the directory structure for this class: *${CLASSROOM_DIR}*
   * `assignment_grading/`: (this directory)
     * `README.md`: this file 
-    * `bin/grade.bash`: a bash script that supports grading of paper-like assignments
-    * `00-sample-assignment/`: a directory that contains a sample assignment
+    * `classroom_roster.csv`: the class roster downloaded from GitHub Classrooom
+    * `roster`: a text file that contains a list of student's git accounts 
+    * `grades.xx-sample-assignment.txt`: grades for sample assignment
+
+    * `xx-sample-assignment/`: a sample assignment
+      * `release_date`: the date in which the assignment was released
+      * `due_date`: the date in which the assignment is due
+      * `time_limit`: the amount of time after the student as accepted
+      * `grace_period`: the amount of time for a grace period
+
       * `key/`: a directory to store the Professor's solution 
         * `README.md`: general instructions on the submission process
         * `assignment.md`: the original assignment
         * `answers.md`: the official answers to the assignment
         * `grading_rubric`: defined grading rubric
       * `submissions/`: a directory to store each of the student's submissions 
-      * `release_date`: the date in which the assignment was released
-      * `due_date`: the date in which the assignment is due
-      * `time_limit`: the amount of time after the student as accepted
-      * `grace_period`: the amount of time for a grace period
 
-    * `classroom_roster.csv`: the class roster downloaded from GitHub Classrooom
-    * `roster`: a text file that contains a list of student's git accounts 
-    * `grades.01-assignment.txt`: grades for the 01-st assignment
-    * `grades.02-assignment.txt`: grades for the 02-nd assignment
-    * ...
-    * `grades.nn-assignment.txt`: grades for the n-th assignment
-    * `01-assignment/`: directory for the 01-st assignment
-      * `assignment_key/`: the solutions repository
-      * `submissions/`: directory for all student submissions
-        * `01-assignment-student-id_1/`: student's assignment repositoy
-        * `01-assignment-student-id_2/`
-        * ...
-        * `01-assignment-student-id_N/`
-    * `02-assignment/`: directory for the 02-nd assignment
-    * ...
-    * `nn-assignment/`: directory for the n-th assignment
+
 

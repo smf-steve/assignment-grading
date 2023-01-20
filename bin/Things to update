@@ -1,13 +1,4 @@
-Things to update
-1. (done) update {CLASS_GRADE_REPORT}
-   - comment the extra stuff
-   - rename *.log
-
-1. document and unify the naming of
-  release_date&
-  due_date
-  time_limit
-  grace_period
+grade-assignment project
 
 8. Test 
   Maybe the grade process is to
@@ -16,26 +7,20 @@ Things to update
      - commit the files
      - then merge the files
 
-1. Create create_assignment
-
-
-=====
+==
+what if, 
+   when you clone, you create a directory that is empty if the user did not except
+     - you can still clone later
+     - but you can leave a grade-report that status
+       -- the user did not accept the assignment 
+     - later, this will validate that stuff worked correctly.
+       If current-date > due_date then
+          - echo current-date > clone_date
+          - grade-report
+              -- did not accept
 
 1. maybe add the notition that the assignment was
    for code, paper or both
-
-1. Class information should be available before
-    -- this is to allow the running of final grading stuff
-   grade-start
-      grading.log gets created or update upon grade-start
-
-1. Source bin/grade.bash from .profile
-1. Updated grade_start:
-   check for validity of location
-     1. 
-
-grade_start
-
 
 
 1. move away from a .env file -- see makefile above
@@ -47,7 +32,7 @@ grade_start
 
 7. spilt ??
      - grade_submissions: grading  -- served well if adding/commit was separt in case of multiple grading or fixing stuff
-     - update_repo? : adding grade.report, answers.md, etc.
+     - commit_grading:  : adding grade.report, answers.md, etc.
      - publish_grade: publishing:  i.e, publishing is just pushing?
 
 
@@ -67,58 +52,44 @@ Check on the case of
 If comments are made for the grade report
    as opposed to putting them on the end of the line, make a new line.
    
-Need a way to allow prof override on individual student... 
-   Due date and time limit
+
 Need a way to grade a section at a time for due date, etc.
 
-mkuh
 
-Final Grading process.
+grade.bash
 
-1. Download updated rosters
-   - validate rosters is in case-insensitive ordered to match github account names 
-   - place the roster in the top level directory
-2. Copy all grades.*.txt files to here
-3. Run grades_log2csv on all grades.*.txt --> producing .csv
-4. update the spreadsheet to include the .csv files
+-- makefile for Java and MIPS
+-- cleanup
 
-Fall 2022: 
-- All grading and regrades have been validated
-  - Directories with grades.* and grades.*.txt 
-    - regrades are in grades.*.txt
-    - original grades are in grades.*
-  - the copies of grades.*.txt after regrading was not done
-    - hence the grades.*.csv files are not all up to date
-  - regrades have either been 
-    - updated to grades.*.csv and included in the spreadsheet
-    - directly added to the spreadsheet.
+-- ability to have multiple assignments per repo
+   -- grade_start  (default) 
+   -- grade_start <name>
+      * grade_report.<name>
+      * due.date.<name>
+      * grades.42-string-mips.<name>
 
 
-
-dwarf:comp122 steve$ cd assignment-grading/
-dwarf:assignment-grading steve$ source bin/grade.bash 
--bash: /Users/steve/Desktop/classes/assignment-grading/.grading.env: No such file or directory
-dwarf:assignment-grading steve$
-
-Then after that error you get,
-
-dwarf:40-exam-mips steve$ source ../bin/grade.bash 
--bash: /Users/steve/Desktop/classes/assignment-grading/.grading.env: No such file or directory
-dwarf:40-exam-mips steve$ 
-
-i.e., once an error it stays an on...
-===
-
-Warning: Due-date File Not Found: "/Users/steve/Desktop/classes/comp122/assignment-grading/42-kickstart/due.date"
+-- need override to have fixed by Prof.
+   -- if you checkout main, verses commit number
+-- make grading branch..
+   -- merge at end.
 
 
-make error message relative
-==
+-- need way auto to zero for 1 commit
+-- need way to 
 
-message of Cloned versus Cloning
-warf:10-quiz-models steve$ clone_submission nabeel2424
-Cloned: nabeel2424
-dwarf:10-quiz-models steve$ cd 
+-- need better way to provide prompting of rubric.grading
 
-AFter this there still was not file for nabeel2424
 
+Testing hook for programming
+  -- must compile
+  -- must have intial files that are for the deliverables
+
+pregrade..  
+  -- need a way to flag no submission.md
+  -- need a way to flag practically assignment == submission.md
+     -- practically 
+         -- only some many updates?
+         -- <!-- >   < less than some many updates as a percentage?
+         
+  -- need a way to have zero commits
