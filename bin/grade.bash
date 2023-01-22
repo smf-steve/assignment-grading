@@ -5,7 +5,7 @@
 
 # These assignments are presumed to include paper-like assignments within a text file.
 # Hence, a visual review of each STUDENT_SUBMISSION_FILE is needed.  It is also presumed that
-# each line that contains an answer includes the RESPONSE_TAG that allows for
+# each line that contains an answer also includes the RESPONSE_TAG that allows for
 # the collection of just the answers via a simple 'grep' of the STUDENT_SUBMISSION_FILE.
 
 # The appropriate file is opened for visual review, and then, via the CLI, the 
@@ -13,7 +13,7 @@
 # scoring guide (rubric).
 
 # Alternatively, a makefile can be provided to test the student submission.
-# After the makefile is executied, the provessor is prompted for a score for each 
+# After the makefile is executed, the professor is prompted for a score for each 
 # individual element within a defined scoring guide (rubric).
 
 
@@ -30,13 +30,22 @@
 #     - create a github classroom
 #     - create a directory for the class
 #     - cd to the class directory
-#     - run the command `create_assignments_dir <github classroom>` 
+#     - run the command `create_grading_dir <github classroom>` 
 #
 #   For each assignment
-#     - create an assignment template repository
-#     - create an assignment solution repository (optional)
+#     - create a template repository containing the Professors version of an assignment
+#         This version may contain the answer key, grading rubric, etc.
+#         Recommend that this version:  github.com:${PROF}/ASSIGNMENT_NAME
+#     - create a template repository assignment template repository
+#         This version don't not contain grading information
+#         Recommend that this version:  github.com:${CLASS}/ASSIGNMENT_NAME
 #     - cd to the classroom assignment_grading directory:
 #     - run the command `create_assignment <xx-assignment>` 
+#
+#       Repository Names:
+#          Prof:      ${PROF}/assignment    (No XX because assignment might be used in future)
+#          Class:     ${CLASS}/xx-assignment
+#          Student:   ${CLASS}/xx-assignment-${student}
 #
 #   For grading an assignment
 #     - cd <xx-assignment>
@@ -61,6 +70,8 @@
 #       - convert the log file into a .csv file for integration
 #     * record the grades: "insert grades.<assignment>.csv" into the master spreadsheet
 #############################################################
+
+ASSIGNMENT_GRADING_BASENAME="assignment-grading"
 
 export GRADING_SCRIPT="${HOME}/bin/grade.bash"  # This is the name of this particular script 
 export GIT_STATISTICS_BASH="${HOME}/bin/git.statistics.bash"
@@ -165,7 +176,7 @@ GRACE_PERIOD_FILE="\${ASSIGNMENT_DIR}/grace_period"
   STUDENT_BASE_URL=\${GITHUB_PREFIX}/\${ASSIGNMENT_NAME}
 
   # Assignment Based Files
-  LOCAL_GRADE_REPORT="\${ASSIGNMENT_DIR}/grades.\${ASSIGNMENT_NAME}.txt"
+  LOCAL_GRADE_REPORT="\${ASSIGNMENT_DIR}/grades.txt"
   SUBMISSION_DIR="\${ASSIGNMENT_DIR}/submissions"
   
   KEY_DIR="\${ASSIGNMENT_DIR}/key"
@@ -187,17 +198,17 @@ EOF
 
 # Process..
 # - cd to the assignment-grading directory
-# - execute the command `create_assignment assignment_dir`
+# - execute the command `create_grading_dir  GITHUB_classroom`
 # 
 function create_grading_dir () {
   GITHUB_CLASSROOM=${1}
-  ASSIGNMENT_GRADING_DIR="${PWD}/assignment-grading"
+  ASSIGNMENT_GRADING_DIR="${PWD}/${ASSIGNMENT_GRADING_BASENAME}"
   GRADING_ENV=${ASSIGNMENT_GRADING_DIR}/grading.env
 
   if [[ -z ${GITHUB_CLASSROOM} ]] ; then 
     echo "Usage:"
     echo "   cd <class directory>" 
-    echo "   create_assignments_dir github_classroom"
+    echo "   create_grading_dir github_classroom"
     echo "     where github_classroom is the GITHUB Tag for the classroom"
     return 1;
   fi
@@ -209,55 +220,61 @@ function create_grading_dir () {
 
   mkdir ${ASSIGNMENT_GRADING_DIR}
   create_grading_env ${GITHUB_CLASSROOM} > ${GRADING_ENV}
-  create_assignment xx-sample-assignment
+  ( cd ${ASSIGNMENT_GRADING_DIR} ; create_assignment xx-sample-assignment )
 }
 
 # This function presumes that you location is
 #  $HOME/.../<class>/assignment-grading/.
 function create_assignment () {
-  ASSIGNMENT_DIR="${1}"
+  if [[ -z "${1}" ]] ; then 
+    echo "Usage: create_assignment xx-assignment-name"
+    echo "   cd <${ASSIGNMENT_GRADING_BASENAME}>"
+    echo "   create_assignment xx-assignment-name"
+    echo "     where xx-assignment is the GITHUB name for the assignment"
+    return 1;
+  fi
+
+  ASSIGNMENT_NAME="${1}"
 
   ASSIGNMENT_GRADING_DIR="${PWD}"
   GRADING_ENV="${ASSIGNMENT_GRADING_DIR}/grading.env"
 
 
-  if [[ "assignment-grading" != "$(basename ${PWD})" ]] ; then
-    echo "Usage:"
-    echo "   cd <assignment grading directory>"
+  if [[ "${ASSIGNMENT_GRADING_BASENAME}" != "$(basename ${PWD})" ]] ; then
+    echo "Error: The working directory is not ${ASSIGNMENT_GRADING_BASENAME}"
+    echo "Usage: create_assignment  xx-assignment-name"
+    echo "   cd <${ASSIGNMENT_GRADING_BASENAME}>"
     echo "   create_assignment  xx-assignment-name"
-    echo "     where xx-assignment is the GITHUB name for the assignment"
     return 1;
   fi
 
-  if [[ -z "${ASSIGNMENT_DIR}" ]] ; then 
-    echo "Usage:"
-    echo "   cd <assignment grading directory>"
-    echo "   create_assignment  xx-assignment-name"
-    echo "     where xx-assignment is the GITHUB name for the assignment"
-    return 1;
-  fi
-
-  if [[ -e "${ASSIGNMENT_DIR}" ]] ; then
-    echo "Assignment Directory already exists"
+  if [[ -e "${ASSIGNMENT_NAME}" ]] ; then
+    echo "Directory already exists: ${ASSIGNMENT_NAME}"
     return 2;
   fi
 
-  # Where does the following file come from
-  # What is in the file
 
-  mkdir ${ASSIGNMENT_DIR}
+  mkdir ${ASSIGNMENT_NAME}
   ASSIGNMENT_ENV="assignment.env"  
-  create_assignment_env > ${ASSIGNMENT_DIR}/${ASSIGNMENT_ENV}
+  create_assignment_env > ${ASSIGNMENT_NAME}/${ASSIGNMENT_ENV}
     {
-      cd ${ASSIGNMENT_DIR};
+      cd ${ASSIGNMENT_NAME};
       source ${ASSIGNMENT_ENV}  # source the default environment file
       cd ..
     }
 
   mkdir ${KEY_DIR}
+
+  # Clone the template directory if it exists
+  git clone ${STUDENT_BASE_URL}.git ${KEY_DIR} >/dev/null 2>&1 
+  if ((  $? != 0 )) ; then
+    echo "Warning: Template Assignment does not exists."
+    echo "   ${STUDENT_BASE_URL}.git"
+  fi
+
   mkdir ${SUBMISSION_DIR}
   touch ${LOCAL_GRADE_REPORT}
-  ln    ${LOCAL_GRADE_REPORT} ${CLASS_GRADE_REPORT} 
+  ln    ${LOCAL_GRADE_REPORT} ${CLASS_GRADE_REPORT}
   touch ${RELEASE_DATE_FILE}
   touch ${DUE_DATE_FILE}
   touch ${TIME_LIMIT_FILE}
@@ -271,7 +288,7 @@ function grade_start () {
   # 2. Source the assignment.env
   # 3. Startup for grading
   if [[ ! -f assignment.env ]] ; then
-    echo "Usage:  cd <assignment_dir> ; grade_start"
+    echo "Usage:  cd <${ASSIGNMENT_GRADING_BASENAME}> ; grade_start"
     return 1
   fi
   source assignment.env
@@ -283,10 +300,10 @@ function grade_start () {
   DUE_DATE="Not Defined"
   TIME_LIMIT=
   GRACE_PERIOD=
-  [[ -s "${RELEASE_DATE_FILE}" ]] && RELEASE_DATE="$(cat_nocomment RELEASE_DATE_FILE})"
-  [[ -s "${DUE_DATE_FILE}" ]]     && DUE_DATE="$(cat_nocomment ${DUE_DATE_FILE})"
-  [[ -s "${GRACE_PERIOD_FILE}" ]] && GRACE_PERIOD="$(cat_nocomment ${GRACE_PERIOD_FILE})" 
-  [[ -s "${TIME_LIMIT_FILE}" ]]   && TIME_LIMIT_FILE="$(cat_nocomment ${TIME_LIMIT_FILE})" 
+  [[ -s "${RELEASE_DATE_FILE}" ]] && RELEASE_DATE="$(cat_nocomments RELEASE_DATE_FILE})"
+  [[ -s "${DUE_DATE_FILE}" ]]     && DUE_DATE="$(cat_nocomments ${DUE_DATE_FILE})"
+  [[ -s "${GRACE_PERIOD_FILE}" ]] && GRACE_PERIOD="$(cat_nocomments ${GRACE_PERIOD_FILE})" 
+  [[ -s "${TIME_LIMIT_FILE}" ]]   && TIME_LIMIT_FILE="$(cat_nocomments ${TIME_LIMIT_FILE})" 
 
   echo "Starting the grading for:" ${ASSIGNMENT_NAME}
   [[ -n ${RELEASE_DATE} ]] && echo "Release Date: ${RELEASE_DATE}"
@@ -299,6 +316,8 @@ function grade_start () {
      _l=$(relative_filename "${KEY_RUBRIC_FILE}" )
      echo "Warning: Rubric File Not Found: \"${_l}\"" ;  
   }
+  # Check for grading roster
+  assert_class_roster || return $?
 
 }
 
@@ -385,7 +404,7 @@ function grade_submission () {
           echo "# Github Account: ${_student}"
           echo "# Assignment: \"${ASSIGNMENT_NAME}\""
           echo "# Assignment ID: \"${ASSIGNMENT_ID}\""
-          echo "# --- Submission date: \"${SUBMISSSION_DATE}\""
+          echo "# --- Submission date: \"${SUBMISSION_DATE}\""
           echo "# --- Submission tag : \"${GRADED_TAG}.start (${SUBMISSION_HASH})\""
           echo 
           echo "Missing submission file: ${STUDENT_SUBMISSION_FILE}"
@@ -466,18 +485,21 @@ function grade_submission () {
 }
 function grade_submissions () {
   _grading_count=0
+
+  assert_submission_roster || return $?
+
   {
     echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
-  } >> ${CLASS_GRADE_REPORT}
+  } >> "${CLASS_GRADE_REPORT}"
 
   while read _student ; do
     grade_submission ${_student}
-  done < ${SUBMISSION_ROSTER}
+  done < "${SUBMISSION_ROSTER}"
 
   {
     echo "# -------------------------------------"
     echo
-  } >> ${CLASS_GRADE_REPORT}
+  } >> "${CLASS_GRADE_REPORT}"
 }
 
 
@@ -493,6 +515,10 @@ function reset_grading () {
 
 
 function clone_submission () {
+     if [[ -z "${1}" ]] ; then
+    echo "Usage: pull_submission student"
+    return 1
+   fi 
    _student="${1}"
 
    if [[ -d ${ASSIGNMENT_NAME}-${_student} ]] ; then
@@ -511,6 +537,11 @@ function clone_submission () {
 }
 function clone_submissions () {
 
+  if [[ ! -f "${CLASS_ROSTER}" ]] ; then
+    echo "Error: No Classroster" 
+    return 2
+  fi 
+
   { 
     echo
     echo "---------------------"
@@ -527,7 +558,12 @@ function clone_submissions () {
 
 
 function pull_submission () {
+   if [[ -z "${1}" ]] ; then
+    echo "Usage: pull_submission student"
+    return 1
+   fi 
    _student=${1}
+
    _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
 
    if [[ -d "${_dir}" ]] ; then 
@@ -540,6 +576,9 @@ function pull_submission () {
    fi
 }
 function pull_submissions () {
+
+  assert_submission_roster || return $?
+
   { 
     echo "-------------------"
     echo "Pulling submissions: $(date)"
@@ -580,6 +619,8 @@ function publish_grade () {
   fi
 }
 function publish_grades () {
+  assert_submission_roster || return $?
+
   { 
     echo "-------------------"
     echo "Publishing grades: $(date)"
@@ -658,10 +699,13 @@ function checkout_date () {
 }
 
 
-## Following is now defunct due to timelime due.date information
+## Following is now defunct due to timeline due.date information
 function checkout_due_date () {
   _date=${1}
-  [[ -z ${_date} ]] && [[ -f due.date ]] && _date="$(cat_nocomment due.date)"
+
+  assert_submission_roster || return $?
+
+  [[ -z ${_date} ]] && [[ -f due.date ]] && _date="$(cat_nocomments due.date)"
 
   [[ -z ${_date} ]] && return
   
@@ -672,17 +716,34 @@ function checkout_due_date () {
 
   while read _student ; do
     checkout_date "${_date}" ${_student} 
-  done < ${SUBMISSION_ROSTER}
+  done < "${SUBMISSION_ROSTER}"
 }  
 
 
+function assert_submission_roster () {
+  if [[ ! -f "${SUBMISSION_ROSTER}" ]] ; then
+    echo "Error: No Submission Roster" 
+    return 2
+  fi 
+}
+
+function assert_class_roster () {
+  if [[ ! -f ${CLASS_ROSTER} ]] ; then 
+     _l=$(relative_filename "${CLASS_ROSTER}" )
+     echo "Error: Grading Roster \"../$_l\" not found."
+     return 1
+  fi
+}
 
 function apply_all () {
   _CMD="$*"
+
+  assert_submission_roster || return $?
+
   { 
     echo
     echo "-------------------"
-    echo "Apply the following command within each Student Repo"
+    echo "Applying the following command within each Student Repository"
     echo "  Command:" $CMD
     echo
   } >> ${GRADING_LOG}
@@ -694,11 +755,11 @@ function apply_all () {
       basename ${PWD}
       eval ${_CMD}
     ) 
-  done < ${SUBMISSION_ROSTER}
+  done < "${SUBMISSION_ROSTER}"
 } 
 
 
-function cat_nocomment () {
+function cat_nocomments () {
 
   sed -e '/^ *#.*$//'  -e '/^ *$/d' "$@"
 }
