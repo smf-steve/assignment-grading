@@ -24,7 +24,7 @@ GITHUB_CLASS=
    1. create roster
       ```
       awk -F, '{print $2}' classroom_roster.csv |
-        sort > roster
+        sed 's/"//g' | sort -f > roster
       ```
    1. Post grading:
       - grades2csv grades_xxxx.txt
