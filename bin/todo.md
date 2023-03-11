@@ -140,3 +140,8 @@
   Need to build it as part of grade_start????
 
 1. Make grade_start or other subroutine create the roster from the classroom_roster.csv automatically
+
+
+1. Add the ability to read students from stdin
+   -   cat f | clone_submissions -
+   - not current ability to process [ nil | file | student-list ] is not implemented for this subroutine
