@@ -72,7 +72,7 @@
 #############################################################
 
 ASSIGNMENT_GRADING_BASENAME="assignment-grading"
-
+ASSIGNMENT_ENV="assignment.env"
 export GRADING_SCRIPT="${HOME}/bin/grade.bash"  # This is the name of this particular script 
 export GIT_STATISTICS_BASH="${HOME}/bin/git.statistics.bash"
 
@@ -135,9 +135,12 @@ STUDENT_SUBMISSION_FILE="submission.md"           # Contained within the student
 STUDENT_ANSWER_KEY="answers.md"                   # To be added to the student's repo
 STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
 STUDENT_STAT_REPORT="statistics.report"           # To be added to the student's repo
-STUDENT_GRADE_CHECKOUT="grade.checkout"           # The git commit line associated with the graded checkout
+
+STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to checkout_date, this file contains the git log before this date
+                                                  # Otherwise the file is empty
 
 ## GRADING RELATED VARIABLES
+SUBMISSION_TAG="submission"                       # Tag to identify the start of the grading branch
 GRADED_TAG="graded"                               # Tag to identify version graded
 GRADING_BRANCH="grading"
 
@@ -237,8 +240,6 @@ function create_assignment () {
   ASSIGNMENT_NAME="${1}"
 
   ASSIGNMENT_GRADING_DIR="${PWD}"
-  GRADING_ENV="${ASSIGNMENT_GRADING_DIR}/grading.env"
-
 
   if [[ "${ASSIGNMENT_GRADING_BASENAME}" != "$(basename ${PWD})" ]] ; then
     echo "Error: The working directory is not ${ASSIGNMENT_GRADING_BASENAME}"
@@ -246,6 +247,12 @@ function create_assignment () {
     echo "   cd <${ASSIGNMENT_GRADING_BASENAME}>"
     echo "   create_assignment  xx-assignment-name"
     return 1;
+  fi
+
+  GRADING_ENV="${ASSIGNMENT_GRADING_DIR}/grading.env"
+  if [[ ! -f ${GRADING_ENV} ]] ; then
+    echo "File does not exist: ${GRADING_ENV}"
+    return 2;
   fi
 
   if [[ -e "${ASSIGNMENT_NAME}" ]] ; then
@@ -309,7 +316,7 @@ function grade_start () {
   [[ -n ${RELEASE_DATE} ]] && echo "Release Date: ${RELEASE_DATE}"
   [[ -n ${DUE_DATE} ]]     && echo "Due Date: ${DUE_DATE}"
   [[ -n ${TIME_LIMIT} ]]   && echo "Time Limit: ${TIME_LIMIT}"
-  [[ -n ${GRACE_PERIOD} ]] && echo "Grace Period: ${GRACE_PERIOD})"
+  [[ -n ${GRACE_PERIOD} ]] && echo "Grace Period: ${GRACE_PERIOD}"
 
   # Check for key files
   [[ ! -f ${KEY_RUBRIC_FILE} ]] && {
@@ -318,6 +325,9 @@ function grade_start () {
   }
   # Check for grading roster
   assert_class_roster || return $?
+
+
+  _grading_count=0
 
 }
 
@@ -338,11 +348,23 @@ function relative_filename() {
 function regrade_submission () {
   _student=${1}
   _commit=${2}
+  # remove tag and branch
+  
+  # Here we presume that we have not merged the branch
+
+  # if we have truely finished grading then, we want a secondary branch
+  # if it was an error to start the grading, and we want to cleanup 
+  #  then simply remove the branch 
+  git checkout main
+  git branch -D ${GRADING_BRANCH}
+  git tag -d ${SUBMISSION_TAG}
 
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
   ( 
-    cd $_dir  
-    mv ${CLASS_GRADE_REPORT} ${CLASS_GRADE_REPORT}.$(date "+%Y:%m:%d:%H:%M")
+    cd $_dir 
+    git checkout main
+    git branch -D ${GRADING_BRANCH}
+    git tag -d ${SUBMISSION_TAG}
   )
 
   {
@@ -358,19 +380,19 @@ function grade_submission () {
   _commit=${2}
 
   source ${ASSIGNMENT_ENV}
-
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
 
+  echo "--------------" > $terminal
+  echo "Grading $_student" > $terminal
+  if [[ ! -d $_dir ]] ; then
+    printf "Error student did not accept assignment\n" > $terminal
+    printf "$_student: -1\t\t# Did not ACCEPT assignment\n" >>${CLASS_GRADE_REPORT}
+    return
+  fi
+
   (
-    echo "--------------" > $terminal
-    echo "Grading $_student" > $terminal
-    echo "# $_grading_count" > $terminal
+    echo "# Count: $_grading_count" > $terminal
     (( _grading_count ++ ))
-    if [[ ! -d $_dir ]] ; then
-      printf "\tStudent did not accept assignment\n"
-      printf "$_student: -1\n" >>${CLASS_GRADE_REPORT}
-      return
-    fi
 
     cd $_dir
     source "${GIT_STATISTICS_BASH}"
@@ -379,11 +401,20 @@ function grade_submission () {
     #  - they did not effectively submit something
     #  - they have a submission based upon due_date, etc
     #  - a specific commit hash was provided.
-    git checkout ${ACCEPT_HASH}
-    [[ -n "${SUBMISSION_HASH}" ]] && git checkout ${SUBMISSION_HASH}
-    [[ -n "${_commit}" ]] && get checkout ${_commit}
+    git checkout ${ACCEPT_HASH} >/dev/null 2>&1
+    [[ -n "${SUBMISSION_HASH}" ]] && git checkout ${SUBMISSION_HASH} >/dev/null 2>&1
+    [[ -n "${_commit}" ]] && get checkout ${_commit} >/dev/null 2>&1
 
-    git branch ${GRADED}
+
+    git branch ${GRADING_BRANCH} >/dev/null 2>&1
+    if (( $? != 0 )) ; then
+      echo "Error: This repo has already been graded"
+      return
+    fi
+    git tag ${SUBMISSION_TAG}
+    # git checkout ${GRADING_BRANCH} >/dev/null 2>&1
+    # You only need to checkout the grading branch when you perform
+    # The git add, commit steps.
 
     ## But if there is a KEY_MAKEFILE and NO submission file... then there is a problem.
     ## The problem is that the grade report
@@ -402,14 +433,14 @@ function grade_submission () {
         { 
           echo "# Grading Report"
           echo "# Github Account: ${_student}"
-          echo "# Assignment: \"${ASSIGNMENT_NAME}\""
-          echo "# Assignment ID: \"${ASSIGNMENT_ID}\""
-          echo "# --- Submission date: \"${SUBMISSION_DATE}\""
-          echo "# --- Submission tag : \"${GRADED_TAG}.start (${SUBMISSION_HASH})\""
+          echo "# Assignment:    \"${ASSIGNMENT_NAME}\""
+          echo "# --- Due Date:        \"${DUE_DATE}\""
+          echo "# --- Submission Date: \"${SUBMISSION_DATE}\""
+          echo "# --- Tag & Hash:      \"${SUBMISSION_TAG} (${SUBMISSION_HASH})\""
           echo 
           echo "Missing submission file: ${STUDENT_SUBMISSION_FILE}"
           echo
-          echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\""
+          echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\"        # ${_student}"
         }  >> ${STUDENT_GRADE_REPORT}
         return
       fi
@@ -425,12 +456,13 @@ function grade_submission () {
           echo "# Github Account: ${_student}"
           echo "# Assignment: \"${ASSIGNMENT_NAME}\""
           echo "# Assignment ID: \"${ASSIGNMENT_ID}\""
-          echo "# --- Submission date: \"${SUBMISSSION_DATE}\""
-          echo "# --- Submission tag : \"${GRADED_TAG}.start (${SUBMISSION_HASH})\""
+          echo "# --- Due Date:        \"${DUE_DATE}\""
+          echo "# --- Submission Date: \"${SUBMISSION_DATE}\""
+          echo "# --- Tag & Hash:      \"${SUBMISSION_TAG} (${SUBMISSION_HASH})\""
           echo 
           echo "Submission file has not been updated: ${STUDENT_SUBMISSION_FILE}"
           echo
-          echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\""
+          echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\"         # ${_student}"
         }  >> ${STUDENT_GRADE_REPORT} 
         return
       fi
@@ -453,10 +485,10 @@ function grade_submission () {
       echo "# Github Account: ${_student}"
       echo "# Assignment: \"${ASSIGNMENT_NAME}\""
       echo "# Assignment ID: \"${ASSIGNMENT_ID}\""
-      echo "# --- Submission date: \"${SUBMISSSION_DATE}\""
-      echo "# --- Submission tag : \"${GRADED_TAG}.start (${SUBMISSION_HASH})\""
+      echo "# --- Due Date:        \"${DUE_DATE}\""
+      echo "# --- Submission Date: \"${SUBMISSION_DATE}\""
+      echo "# --- Tag & Hash:      \"${SUBMISSION_TAG} (${SUBMISSION_HASH})\""
       echo
-
     }  >> ${STUDENT_GRADE_REPORT}
   
     # For each line in the rubric
@@ -469,20 +501,56 @@ function grade_submission () {
 
     # Add the grade.report epilogue
     {
-      echo "---"
-      printf "%3d Points:\t\tTotal\n" $_score
+      echo "----"
+      printf " %3d Points:\t\tTotal\n" $_score
       echo
-      echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\""
+      echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
+      echo
+
+      echo "COMMIT LOG:"
+      git log --format=" %h %ad %d" --date="format: %b %d %H:%m" --graph  --after "${DUE_DATE}"
+      echo "* Due Date: ${DUE_DATE}  -----------------"
+      git log --format=" %h %ad %d" --date="format: %b %d %H:%m" --graph  --before "${DUE_DATE}"
+      echo
     } >> ${STUDENT_GRADE_REPORT}
+
+
 
     # Print out final score
     { echo ; 
       printf "$_student: $_score\n" ;
       echo ; 
     } > $terminal
-    printf "$_student: $_score\n" >>${CLASS_GRADE_REPORT}
-  )
+
+    if [[ -z ${MINUTES_LATE} ]] ; then
+      printf "$_student: $_score\n" >>${CLASS_GRADE_REPORT}
+    else 
+      printf "$_student: $_score\t\t# MINUTES_LATE=${MINUTES_LATE}\n"
+    fi >>${CLASS_GRADE_REPORT}
+  ) 
 }
+
+function input_list () {
+   case  $# in
+      0 )
+            cat ${CLASS_ROSTER}
+            ;;
+      1 )
+       if [[ -f $1 ]]  ; then
+          cat ${1}
+       else
+              echo ${1}
+       fi
+       ;;
+      * )
+        for i in "$@" ; do
+          echo  $i
+        done
+       ;;
+   esac
+}
+
+
 function grade_submissions () {
   _grading_count=0
 
@@ -492,9 +560,10 @@ function grade_submissions () {
     echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
   } >> "${CLASS_GRADE_REPORT}"
 
-  while read _student ; do
+
+  for _student in $(input_list "$@") ; do
     grade_submission ${_student}
-  done < "${SUBMISSION_ROSTER}"
+  done
 
   {
     echo "# -------------------------------------"
@@ -505,35 +574,36 @@ function grade_submissions () {
 
 function reset_grading () {
 
-  [[ -f "${CLASS_GRADE_REPORT}" ]] && {
-    mv ${CLASS_GRADE_REPORT} ${CLASS_GRADE_REPORT}.$(date "+%Y:%m:%d:%H:%M")
-    mv ${SUBMISSION_ROSTER} ${SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
-    mv ${NON_SUBMISSION_ROSTER} ${NON_SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
-  }
+  # [[ -f "${CLASS_GRADE_REPORT}" ]] && {
+  #   mv ${CLASS_GRADE_REPORT} ${CLASS_GRADE_REPORT}.$(date "+%Y:%m:%d:%H:%M")
+  #   mv ${SUBMISSION_ROSTER} ${SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
+  #   mv ${NON_SUBMISSION_ROSTER} ${NON_SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
+  #}
   find ${SUBMISSION_DIR} -name ${STUDENT_GRADE_REPORT} -exec git rm -f {} \;
 }
 
 
 function clone_submission () {
-     if [[ -z "${1}" ]] ; then
-    echo "Usage: pull_submission student"
+    
+  if [[ -z "${1}" ]] ; then
+    echo "Usage: clone_submission student"
     return 1
-   fi 
-   _student="${1}"
+  fi 
+  _student="${1}"
 
-   if [[ -d ${ASSIGNMENT_NAME}-${_student} ]] ; then
-      echo "Previously Cloned -- pulling: ${_student}"
-      pull_submission $_student
-   else 
-     git -C ${SUBMISSION_DIR} clone ${STUDENT_BASE_URL}-${_student}.git >> ${GRADING_LOG} 2>/dev/null
-     if [ $? == 0 ] ; then
-        echo "Cloned: ${_student}"
-        echo ${_student} >> ${SUBMISSION_ROSTER}
-     else
-        echo "Did Not Accept Assignment: ${_student}" 1>&2
-        echo ${_student} >> ${NON_SUBMISSION_ROSTER}
-     fi
-   fi
+  if [[ -d ${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student} ]] ; then
+    echo "Previously Cloned -- pulling: ${_student}"
+    pull_submission $_student
+  else 
+    git -C ${SUBMISSION_DIR} clone ${STUDENT_BASE_URL}-${_student}.git >> ${GRADING_LOG} 2>/dev/null
+    if [ $? == 0 ] ; then
+      echo "Cloned: ${_student}"
+      echo ${_student} >> ${SUBMISSION_ROSTER}
+    else
+      echo "Did Not Accept Assignment: ${_student}" 1>&2
+      echo ${_student} >> ${NON_SUBMISSION_ROSTER}
+    fi
+  fi
 }
 function clone_submissions () {
 
@@ -551,7 +621,13 @@ function clone_submissions () {
   } >> ${GRADING_LOG}
 
   while read _student ; do
-    clone_submission ${_student}
+    if [[ -z $_student ]] ; then 
+      echo
+      echo "Warning: blank line in roster"
+      echo
+    else
+      clone_submission ${_student}
+    fi 
   done < ${CLASS_ROSTER}
   
 }  
@@ -584,18 +660,19 @@ function pull_submissions () {
     echo "Pulling submissions: $(date)"
   } >> ${GRADING_LOG} 2>&1
 
-  while read _student ; do
+  for _student in $(input_list "$@") ; do
     pull_submission ${_student}
-  done < ${SUBMISSION_ROSTER}
+  done 
 }  
 
-function publish_grade () {
+function commit_grade () {
   _student=${1}
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}
 
   if [[ -d "${_dir}" ]] ; then
     ( 
       cd ${_dir} 
+      git checkout ${GRADING_BRANCH}
       if [[ -f ${KEY_ANSWER_FILE} ]] ; then
         cp ${KEY_ANSWER_FILE} ${_dir}/.
         git add ${STUDENT_ANSWER_KEY}
@@ -605,7 +682,40 @@ function publish_grade () {
       git commit -m 'Added Student Grade and Stats Report' ${STUDENT_GRADE_REPORT} ${STUDENT_STATS_REPORT}
       git checkout main
       git pull
-      git merge ${GRADE_TAG}
+      git merge ${GRADING_BRANCH}
+      git push --mirror
+      return_value="$?"
+      if [[ ${return_value} == 0 ]] ; then
+        echo "Published (pushed): ${_student}" >$terminal
+        echo "Published (pushed): ${_student}"
+      else
+        echo "Error Pushing: ${_student}"  >$terminal
+        echo "Error Pushing: ${_student}"
+      fi 
+    ) >> ${GRADING_LOG} 2>&1
+  fi
+}
+function commit_grades () {
+  assert_submission_roster || return $?
+
+  { 
+    echo "-------------------"
+    echo "Committing grades: $(date)"
+  } >> ${GRADING_LOG} 2>&1
+
+  for _student in $(input_list "$@") ; do
+    commit_grade ${_student}
+  done
+}  
+
+
+function publish_grade () {
+  _student=${1}
+  _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}
+
+  if [[ -d "${_dir}" ]] ; then
+    ( 
+      cd ${_dir} 
       git push --mirror
       return_value="$?"
       if [[ ${return_value} == 0 ]] ; then
@@ -619,20 +729,34 @@ function publish_grade () {
   fi
 }
 function publish_grades () {
-  assert_submission_roster || return $?
 
-  { 
-    echo "-------------------"
-    echo "Publishing grades: $(date)"
-  } >> ${GRADING_LOG} 2>&1
+ assert_submission_roster || return $?
 
-  while read _student  ; do
-    publish_grade ${_student}
-  done < ${SUBMISSION_ROSTER}
-}  
+  {
+    echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
+  } >> "${GRADING_LOG}" 2>&1
 
+
+  for _student in $(input_list "$@") ; do
+    publish_grades ${_student}
+  done
+
+  {
+    echo "# -------------------------------------"
+    echo
+  } >> "${GRADING_LOG}" 2>&1
+
+
+}
 
 ####
+# Following needs to be tested.
+function recreate_grade_report () {
+   grep "ASSIGNMENT_.._total" ${SUBMISSION_DIR}/*/grade.report |\
+   sed -e 's/^.*="\([0-9]*\)".*# \(.*\)/\2: \1/'
+}
+
+
 function grade_join () {
   _roster=$1
   _grades=$2
@@ -687,14 +811,26 @@ function checkout_date () {
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
   (
     cd $_dir
-    { 
-      _hash=$(git rev-list -1 --until="${_date}" main)
-      echo "Grade as of Date: ${_date}"
-      echo
-      git checkout ${_hash}  2>&1
-      echo                              
-      git log --decorate=full -1 $_hash 
-    } > ${STUDENT_GRADE_CHECKOUT}
+    _hash=$(git rev-list -1 --until="${_date}" main)
+    if [[ -n ${_hash} ]] ; then
+      {
+        echo "# Activity Report"
+        echo "# Github Account: ${_student}"
+        echo "# Assignment:    \"${ASSIGNMENT_NAME}\""
+        echo "# Checkout Date: ${_date}"
+        echo "# Checkout Hash: ${_hash}"
+        echo "# Log Entries before checkout date:"
+        git checkout ${_hash}  1>/dev/null 2>&1
+        echo                              
+
+        git log --decorate=full --oneline -1 
+        # add the author to the top to get ride of the prof's updates if any
+        echo
+      } > ${STUDENT_ACTIVITY_REPORT}
+    else 
+      # Student did not have any activity prior to the checkout date
+      :  
+    fi
   )
 }
 
@@ -705,7 +841,7 @@ function checkout_due_date () {
 
   assert_submission_roster || return $?
 
-  [[ -z ${_date} ]] && [[ -f due.date ]] && _date="$(cat_nocomments due.date)"
+  [[ -z ${_date} ]] && [[ -f due_date ]] && _date="$(cat_nocomments due_date)"
 
   [[ -z ${_date} ]] && return
   
@@ -761,5 +897,5 @@ function apply_all () {
 
 function cat_nocomments () {
 
-  sed -e '/^ *#.*$//'  -e '/^ *$/d' "$@"
+  sed -e 's/^ *#.*$//'  -e '/^ *$/d' "$@"
 }
