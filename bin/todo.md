@@ -1,3 +1,4 @@
+
 # Todo List:
 
 ## Documentation:
@@ -115,3 +116,27 @@
           echo "Error: Need to run grad"
         fi 
       ```
+
+## Double check
+
+1. Not running grade_start causes the following problems
+    dwarf:assignment-grading steve$ grade_submission Jackson-Shea
+    -bash: assignment.env: No such file or directory
+    -bash: $terminal: ambiguous redirect
+    -bash: $terminal: ambiguous redirect
+    -bash: $terminal: ambiguous redirect
+    -bash: ${CLASS_GRADE_REPORT}: ambiguous redirect
+    dwarf:assignment-grading steve$ 
+
+1. grades..txt still appears sometimes
+
+
+1. Need sanitiy checking for...
+  - due date, grace period, etc.
+  - make it part of grade_start 
+
+1. Via the new deployment approach --
+  the default makefile is not provided.
+  Need to build it as part of grade_start????
+
+
