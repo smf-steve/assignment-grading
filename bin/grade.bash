@@ -119,7 +119,7 @@ function create_grading_env () {
 
 ##################################
 ## GLOBAL ENV VARIABLES for the Assignment-Grading system
-
+export GITHUB_PROF_NAME="\$(git config --get user.name)"
 export GITHUB_CLASSROOM="${GITHUB_CLASSROOM}"
 export GITHUB_PREFIX="git@github.com:\${GITHUB_CLASSROOM}"
 
@@ -937,19 +937,26 @@ function apply_all () {
 } 
 
 function ag_show_commit_log () {
-  DUE_DATE="$1" 
+  DUE_DATE="$1"
 
+  
+  echo "COMMIT LOG:"
+  git log --format=" %h %%%an%% %cd"  --date="format: %b %d %H:%M %z" --graph  --after "${DUE_DATE}" |
+     grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
 
-      echo "COMMIT LOG:"
-      git log --format=" %h %cd"  --date="format: %b %d %H:%M %z" --graph  --after "${DUE_DATE}"
-      echo "* Due Date: ${DUE_DATE}  -----------------"
-      git log --format=" %h %cd"  --date="format: %b %d %H:%M %z" --graph  --before "${DUE_DATE}"
-      echo
+  if [[ -z ${DUE_DATE} ]] ; then
+    echo "* Now:      $(date '+%b %d %T')  ---------------"
+  else
+    echo "* Due Date: ${DUE_DATE}  -----------------"
+  fi
+  git log --format=" %h %%%an%% %cd"  --date="format: %b %d %H:%M %z" --graph  --before "${DUE_DATE}" |
+     grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
+  echo
 
-      ## Two issues exist with the date formats.
-      #  1. DUE_DATE is provided in the current timezone
-      #     - the time is off by one hour if either DUE_DATE or log date is in Daylight savings
-      #  2. the initial commit is in a different timezone
+  ## Two issues exist with the date formats.
+  #  1. DUE_DATE is provided in the current timezone
+  #     - the time is off by one hour if either DUE_DATE or log date is in Daylight savings
+  #  2. the initial commit is in a different timezone
 }
 
 
