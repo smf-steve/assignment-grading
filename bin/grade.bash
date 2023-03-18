@@ -47,22 +47,34 @@
 #          Class:     ${CLASS}/xx-assignment
 #          Student:   ${CLASS}/xx-assignment-${student}
 #
-#   For grading an assignment
+#   To initiate the grading of an assignment
 #     - cd <xx-assignment>
 #     - grade_start
-#     - reset_grading (optional)
-#     - clone_submissions
-#     - pull_submissions
-#     - grade_submissions
-#     - publish_grades
+#
+#   To perform various grading steps
+#     - reset_grading       [ | file | args... ]
+#     - clone_submissions   [ | file | args... ]
+#     - pull_submissions    [ | file | args... ]
+#     - grade_submissions   [ | file | args... ]
+#     - regrade_submissions [ | file | args... ]
+#     - commit_grades       [ | file | args... ]
+#     - publish_grades      [ | file | args... ]
+#          - zero args: operate on all students in the class_roster
+#          - one arg that is a file: operate on each students enumerated in the file
+#          - one or more args:  operate on each argument
+#
+#     - recreate_class_grade_report
 #
 #   For re/grade a single student
 #     - cd "<xx-assignment>"
 #     - grade_start
-#     - pull_submission "<account>"
+#     - pull_submissions "<account>"
 #     - grade_submission "<account>" [ commit ]
-#     # - regrade_submission "<account>" [ commit ]
-#     - publish_grade "<account>"
+#     - regrade_submission "<account>" [ commit ]
+#     - publish_grades "<account>"
+#
+#   Aux commands, meant to be called internally
+#     - ag_show_commit_log 
 #
 #   For grade incorporation
 #     - review/update the grades in grades.<xx-assignment>.txt, e.g., regrades
@@ -344,7 +356,30 @@ function relative_filename() {
 #   - for each line in the grading_rubric file
 #     - the prof is prompted for a score followed by an optional comment
 #   - a grade report is created, with the total points tallied
-#   - summary information is provided   
+#   - summary information is provided  
+
+
+
+function regrade_submissions () {
+  _grading_count=0
+
+  assert_submission_roster || return $?
+
+  {
+    echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
+  } >> "${CLASS_GRADE_REPORT}"
+
+
+  for _student in $(input_list "$@") ; do
+    regrade_submission ${_student}
+  done
+
+  {
+    echo "# -------------------------------------"
+    echo
+  } >> "${CLASS_GRADE_REPORT}"
+}
+
 function regrade_submission () {
   _student=${1}
   _commit=${2}
@@ -355,9 +390,6 @@ function regrade_submission () {
   # if we have truely finished grading then, we want a secondary branch
   # if it was an error to start the grading, and we want to cleanup 
   #  then simply remove the branch 
-  git checkout main
-  git branch -D ${GRADING_BRANCH}
-  git tag -d ${SUBMISSION_TAG}
 
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
   ( 
@@ -507,11 +539,8 @@ function grade_submission () {
       echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
       echo
 
-      echo "COMMIT LOG:"
-      git log --format=" %h %ad %d" --date="format: %b %d %H:%m" --graph  --after "${DUE_DATE}"
-      echo "* Due Date: ${DUE_DATE}  -----------------"
-      git log --format=" %h %ad %d" --date="format: %b %d %H:%m" --graph  --before "${DUE_DATE}"
-      echo
+      student_commit_log "${DUE_DATE}"
+
     } >> ${STUDENT_GRADE_REPORT}
 
 
@@ -527,27 +556,29 @@ function grade_submission () {
     else 
       printf "$_student: $_score\t\t# MINUTES_LATE=${MINUTES_LATE}\n"
     fi >>${CLASS_GRADE_REPORT}
+
+    git checkout main    # force to go to the Canonical branch
   ) 
 }
 
 function input_list () {
    case  $# in
       0 )
-            cat ${CLASS_ROSTER}
+            cat ${CLASS_ROSTER} 
             ;;
       1 )
        if [[ -f $1 ]]  ; then
-          cat ${1}
+          cat ${1} 
        else
               echo ${1}
        fi
        ;;
       * )
         for i in "$@" ; do
-          echo  $i
+          echo $i
         done
        ;;
-   esac
+   esac | grep -v "^$"  # skip over blank lines
 }
 
 
@@ -574,12 +605,31 @@ function grade_submissions () {
 
 function reset_grading () {
 
-  # [[ -f "${CLASS_GRADE_REPORT}" ]] && {
-  #   mv ${CLASS_GRADE_REPORT} ${CLASS_GRADE_REPORT}.$(date "+%Y:%m:%d:%H:%M")
-  #   mv ${SUBMISSION_ROSTER} ${SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
-  #   mv ${NON_SUBMISSION_ROSTER} ${NON_SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
-  #}
-  find ${SUBMISSION_DIR} -name ${STUDENT_GRADE_REPORT} -exec git rm -f {} \;
+  assert_submission_roster || return $?
+
+  {
+    echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
+  } >> "${GRADING_LOG}" 2>&1
+
+
+  for _student in $(input_list "$@") ; do
+    (
+      cd ${SUBMISSION_DIR}/$i
+        # [[ -f "${CLASS_GRADE_REPORT}" ]] && {
+        #   mv ${CLASS_GRADE_REPORT} ${CLASS_GRADE_REPORT}.$(date "+%Y:%m:%d:%H:%M")
+        #   mv ${SUBMISSION_ROSTER} ${SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
+        #   mv ${NON_SUBMISSION_ROSTER} ${NON_SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
+        #}
+      git -C ${SUBMISSION_DIR}/$i branch -d ${GRADING_BRANCH}
+      git -C ${SUBMISSION_DIR}/$i tag -d ${SUBMISSION_TAG}
+    )
+  done 2> /dev/null
+
+  {
+    echo "# -------------------------------------"
+    echo
+  } >> "${GRADING_LOG}" 2>&1
+
 }
 
 
@@ -607,12 +657,9 @@ function clone_submission () {
 }
 function clone_submissions () {
 
-  if [[ ! -f "${CLASS_ROSTER}" ]] ; then
-    echo "Error: No Classroster" 
-    return 2
-  fi 
+ assert_submission_roster || return $?
 
-  { 
+ { 
     echo
     echo "---------------------"
     echo "Cloning Submissions:"
@@ -620,16 +667,14 @@ function clone_submissions () {
     echo
   } >> ${GRADING_LOG}
 
-  while read _student ; do
-    if [[ -z $_student ]] ; then 
-      echo
-      echo "Warning: blank line in roster"
-      echo
-    else
-      clone_submission ${_student}
-    fi 
-  done < ${CLASS_ROSTER}
-  
+  for _student in $(input_list "$@") ; do
+    clone_submission ${_student}
+  done 2> /dev/null
+
+  {
+    echo "# -------------------------------------"
+    echo
+  } >> "${GRADING_LOG}" 2>&1
 }  
 
 
@@ -674,25 +719,21 @@ function commit_grade () {
       cd ${_dir} 
       git checkout ${GRADING_BRANCH}
       if [[ -f ${KEY_ANSWER_FILE} ]] ; then
-        cp ${KEY_ANSWER_FILE} ${_dir}/.
+        cp ${KEY_ANSWER_FILE} .
         git add ${STUDENT_ANSWER_KEY}
         git commit -m 'Added Answers File' ${STUDENT_ANSWER_KEY}
       fi
-      git add ${STUDENT_GRADE_REPORT} ${STUDENT_STATS_REPORT}
-      git commit -m 'Added Student Grade and Stats Report' ${STUDENT_GRADE_REPORT} ${STUDENT_STATS_REPORT}
+      git add ${STUDENT_GRADE_REPORT} ${STUDENT_STAT_REPORT}
+      git commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT} 
+      git commit -m 'Added Statistics Report' ${STUDENT_STAT_REPORT}
       git checkout main
       git pull
-      git merge ${GRADING_BRANCH}
-      git push --mirror
-      return_value="$?"
-      if [[ ${return_value} == 0 ]] ; then
-        echo "Published (pushed): ${_student}" >$terminal
-        echo "Published (pushed): ${_student}"
-      else
-        echo "Error Pushing: ${_student}"  >$terminal
-        echo "Error Pushing: ${_student}"
-      fi 
+      git merge --no-ff ${GRADING_BRANCH}
+      if [[ $? != 0 ]] ; then
+        echo "Merge conflict: ${_student}" > $terminal
+      fi
     ) >> ${GRADING_LOG} 2>&1
+    echo "Grade Committed: ${_student}"
   fi
 }
 function commit_grades () {
@@ -738,7 +779,7 @@ function publish_grades () {
 
 
   for _student in $(input_list "$@") ; do
-    publish_grades ${_student}
+    publish_grade ${_student}
   done
 
   {
@@ -751,9 +792,10 @@ function publish_grades () {
 
 ####
 # Following needs to be tested.
-function recreate_grade_report () {
-   grep "ASSIGNMENT_.._total" ${SUBMISSION_DIR}/*/grade.report |\
-   sed -e 's/^.*="\([0-9]*\)".*# \(.*\)/\2: \1/'
+function recreate_class_grade_report () {
+   grep "^ASSIGNMENT_.._total" ${SUBMISSION_DIR}/*/grade.report |\
+   sed -e 's/^.*="\([0-9]*\)".*# \(.*\)/\2: \1/' |\
+   sort -f
 }
 
 
@@ -894,8 +936,32 @@ function apply_all () {
   done < "${SUBMISSION_ROSTER}"
 } 
 
+function ag_show_commit_log () {
+  DUE_DATE="$1" 
+
+
+      echo "COMMIT LOG:"
+      git log --format=" %h %cd"  --date="format: %b %d %H:%M %z" --graph  --after "${DUE_DATE}"
+      echo "* Due Date: ${DUE_DATE}  -----------------"
+      git log --format=" %h %cd"  --date="format: %b %d %H:%M %z" --graph  --before "${DUE_DATE}"
+      echo
+
+      ## Two issues exist with the date formats.
+      #  1. DUE_DATE is provided in the current timezone
+      #     - the time is off by one hour if either DUE_DATE or log date is in Daylight savings
+      #  2. the initial commit is in a different timezone
+}
+
+
+function relative_filename() {
+  _base=${ASSIGNMENT_GRADING_DIR}
+  sed "s|${_base}/||" <<< ${1}
+}
+
 
 function cat_nocomments () {
 
   sed -e 's/^ *#.*$//'  -e '/^ *$/d' "$@"
 }
+
+
