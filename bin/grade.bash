@@ -664,24 +664,15 @@ function clone_submission () {
 }
 function clone_submissions () {
 
- assert_submission_roster || return $?
+  assert_submission_roster || return $?
 
- { 
-    echo
-    echo "---------------------"
-    echo "Cloning Submissions:"
-    echo "  Date:" $(date)
-    echo
+  { 
+    echo "Cloning Submissions:" $(date)
   } >> ${GRADING_LOG}
 
   for _student in $(input_list "$@") ; do
     clone_submission ${_student}
   done 2> /dev/null
-
-  {
-    echo "# -------------------------------------"
-    echo
-  } >> "${GRADING_LOG}" 2>&1
 }  
 
 
@@ -697,7 +688,7 @@ function pull_submission () {
    if [[ -d "${_dir}" ]] ; then 
      ( 
        git checkout main
-       git pull --no-edit >> ${GRADING_LOG} 2>&1
+       git pull --no-edit  2>> ${GRADING_LOG}
        if [ $? == 0 ] ; then
          echo "Pulled: ${_student}"
        else
@@ -711,9 +702,8 @@ function pull_submissions () {
   assert_submission_roster || return $?
 
   { 
-    echo "-------------------"
     echo "Pulling submissions: $(date)"
-  } >> ${GRADING_LOG} 2>&1
+  } >> ${GRADING_LOG}
 
   for _student in $(input_list "$@") ; do
     pull_submission ${_student}
@@ -742,7 +732,7 @@ function commit_grade () {
       if [[ $? != 0 ]] ; then
         echo "Merge conflict: ${_student}" > $terminal
       fi
-    ) >> ${GRADING_LOG} 2>&1
+    ) 2>> ${GRADING_LOG}
     echo "Grade Committed: ${_student}"
   fi
 }
@@ -750,9 +740,8 @@ function commit_grades () {
   assert_submission_roster || return $?
 
   { 
-    echo "-------------------"
     echo "Committing grades: $(date)"
-  } >> ${GRADING_LOG} 2>&1
+  } >> ${GRADING_LOG}
 
   for _student in $(input_list "$@") ; do
     commit_grade ${_student}
@@ -771,7 +760,6 @@ function publish_grade () {
       return_value="$?"
       if [[ ${return_value} == 0 ]] ; then
         echo "Published (pushed): ${_student}" >$terminal
-        echo "Published (pushed): ${_student}"
       else
         echo "Error Pushing: ${_student}"  >$terminal
         echo "Error Pushing: ${_student}"
@@ -784,20 +772,13 @@ function publish_grades () {
  assert_submission_roster || return $?
 
   {
-    echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
+    echo "# Publishing Grades: ${ASSIGNMENT_NAME} $(date)"
   } >> "${GRADING_LOG}" 2>&1
 
 
   for _student in $(input_list "$@") ; do
     publish_grade ${_student}
   done
-
-  {
-    echo "# -------------------------------------"
-    echo
-  } >> "${GRADING_LOG}" 2>&1
-
-
 }
 
 ####
@@ -895,12 +876,10 @@ function checkout_due_date () {
   assert_submission_roster || return $?
 
   [[ -z ${_date} ]] && [[ -f due_date ]] && _date="$(cat_nocomments due_date)"
-
   [[ -z ${_date} ]] && return
   
   { 
-    echo "-------------------"
-    echo "Checking out Version based upon date: ${_date}"
+    echo "Checkout by date (${_date}):" $(date)
   } >> ${GRADING_LOG} 2>&1
 
   while read _student ; do
@@ -930,11 +909,7 @@ function apply_all () {
   assert_submission_roster || return $?
 
   { 
-    echo
-    echo "-------------------"
-    echo "Applying the following command within each Student Repository"
-    echo "  Command:" $_CMD
-    echo
+    echo "Apply_all (\"$_CMD\"): $(date)"
   } >> ${GRADING_LOG}
 
   while read _student  ; do
