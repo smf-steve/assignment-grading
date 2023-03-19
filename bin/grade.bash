@@ -933,7 +933,7 @@ function apply_all () {
     echo
     echo "-------------------"
     echo "Applying the following command within each Student Repository"
-    echo "  Command:" $CMD
+    echo "  Command:" $_CMD
     echo
   } >> ${GRADING_LOG}
 
@@ -951,7 +951,7 @@ function ag_show_commit_log () {
   DUE_DATE="$1"
 
   
-  echo "COMMIT LOG:"
+  echo "STUDENT COMMIT HISTORY:"
   echo
   git log --format=" %h %%%an%% %cd %d"  --date="format: %b %d %H:%M %z" --graph  --after "${DUE_DATE}" |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
