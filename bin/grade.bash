@@ -516,7 +516,7 @@ function grade_submission () {
     {
       echo "Grading $_student" 
       echo 
-      echo ag_show_commit_log ${DUE_DATE}
+      ag_show_commit_log ${DUE_DATE}
       echo
     } > $terminal
 
@@ -547,7 +547,7 @@ function grade_submission () {
       echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
       echo
 
-      student_commit_log "${DUE_DATE}"
+      ag_show_commit_log "${DUE_DATE}"
 
     } >> ${STUDENT_GRADE_REPORT}
 
@@ -696,12 +696,15 @@ function pull_submission () {
    _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
 
    if [[ -d "${_dir}" ]] ; then 
-     git -C "${_dir}" pull --no-edit >> ${GRADING_LOG} 2>&1
-     if [ $? == 0 ] ; then
-       echo "Pulled: ${_student}"
-     else
-       echo "Error Pulling: ${_student}"
-     fi 
+     ( 
+       git checkout main
+       git pull --no-edit >> ${GRADING_LOG} 2>&1
+       if [ $? == 0 ] ; then
+         echo "Pulled: ${_student}"
+       else
+         echo "Error Pulling: ${_student}"
+       fi 
+     )
    fi
 }
 function pull_submissions () {
