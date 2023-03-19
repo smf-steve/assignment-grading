@@ -152,8 +152,7 @@ STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to checkou
                                                   # Otherwise the file is empty
 
 ## GRADING RELATED VARIABLES
-SUBMISSION_TAG="graded_version"                   # Tag to identify the start of the grading branch
-GRADED_TAG="graded_version"                       # Tag to identify version graded
+SUBMISSION_TAG="graded_version"                   # Tag to identify the version of the repo that is graded
 GRADING_BRANCH="grading_information"
 
 GRADING_EDITOR="subl"
