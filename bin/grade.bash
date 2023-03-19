@@ -941,7 +941,8 @@ function ag_show_commit_log () {
 
   
   echo "COMMIT LOG:"
-  git log --format=" %h %%%an%% %cd"  --date="format: %b %d %H:%M %z" --graph  --after "${DUE_DATE}" |
+  echo
+  git log --format=" %h %%%an%% %cd %d"  --date="format: %b %d %H:%M %z" --graph  --after "${DUE_DATE}" |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
 
   if [[ -z ${DUE_DATE} ]] ; then
@@ -949,7 +950,7 @@ function ag_show_commit_log () {
   else
     echo "* Due Date: ${DUE_DATE}  -----------------"
   fi
-  git log --format=" %h %%%an%% %cd"  --date="format: %b %d %H:%M %z" --graph  --before "${DUE_DATE}" |
+  git log --format=" %h %%%an%% %cd %d"  --date="format: %b %d %H:%M %z" --graph  --before "${DUE_DATE}" |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
   echo
 
