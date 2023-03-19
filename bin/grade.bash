@@ -468,9 +468,13 @@ function grade_submission () {
           echo "# Github Account: ${_student}"
           echo "# Assignment:    \"${ASSIGNMENT_NAME}\""
           echo "# --- Due Date:        \"${DUE_DATE}\""
-          echo "# --- Submission Date: \"${SUBMISSION_DATE}\""
-          echo "# --- Tag & Hash:      \"${SUBMISSION_TAG} (${SUBMISSION_HASH})\""
-          echo 
+          echo "# --- Version Graded:  \"${SUBMISSION_TAG} (${SUBMISSION_HASH})\""
+          echo "# --- Version Date:    \"${SUBMISSION_DATE}\""
+          echo "# --- Status:          \"${STATUS}"
+          if [[ -n ${MINUTES_LATE} ]] ; then
+          echo "# --- Grade Version behind by: $MINUTES_LATE minutes"
+          fi 
+          echo
           echo "Missing submission file: ${STUDENT_SUBMISSION_FILE}"
           echo
           echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\"        # ${_student}"
@@ -558,10 +562,12 @@ function grade_submission () {
       echo ; 
     } > $terminal
 
+    printf "%20s %3d\t\t#" $_student: $_score
+
     if [[ -z ${MINUTES_LATE} ]] ; then
-      printf "$_student: $_score\n" >>${CLASS_GRADE_REPORT}
+      printf "\n" 
     else 
-      printf "$_student: $_score\t\t# MINUTES_LATE=${MINUTES_LATE}\n"
+      printf " Grade Version behind by: ${MINUTES_LATE} minutes\n"
     fi >>${CLASS_GRADE_REPORT}
 
     git checkout main    # force to go to the Canonical branch
