@@ -33,12 +33,14 @@ TIMELIMIT_DUE_DATE=
 #    - time_limit_TS = accept_date + time_limit
 #      * date -r <ts> -v +"$time_limit"
 #    - version_TS = min(due_date_TS, time_limit_TS)
-# 4. Extract SUMBISSION INFO
+# 4. Extract SUBMISSION INFO
 # 5. Determine the number of commits
 # 6. Output the information
 
 # Read git log
-git log --format='format:%h %ct' > .$$_full.log
+ git log --format="format:%h %ct %%%an%%" |
+     grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//' > .$$_full.log
+     # this strips out any commits done by the Prof.
 
 # Extract Accept/Last Info
 ACCEPT_INFO=( $(tail -1 .$$_full.log) )
@@ -83,9 +85,17 @@ TIMELIMIT_DUE_DATE="$(date -r ${SUBMISSION_TS} '+%b %d %T')"
 
 # Determine the SUBMISSION INFORMATION
 if (( SUBMISSION_TS < LAST_COMMIT_INFO[1] )) ; then
-   SUBMISSION_INFO=( 
-       $(git log --format='format:%h %ct' --before ${SUBMISSION_TS} -1) 
-   )
+   { 
+      read _hash _ts 
+      while [[ $SUBMISSION_TS < $_ts ]] ; do
+         read _hash _ts 
+      done
+   } < .$$_full.log
+   SUBMISSION_INFO=( $_hash $_ts )
+
+   #SUBMISSION_INFO=( 
+   ##    $(git log --format='format:%h %ct' --before ${SUBMISSION_TS} -1) 
+   #)
 fi
 
 
@@ -129,6 +139,11 @@ else
    MINUTES_LATE="${MINUTES_LATE} minutes late."
 fi
 
+# DAYS_LATE="$(( MINUTES_LATE / (24 * 60)))"
+# REMAINDER="$(( MINUTES_LATE % (24 * 60)))"
+# HOURS_LATE=$(( REMAINDER / 60 ))
+# MIN_LATE=$(( REMAINDER % 60 ))
+# TIME_LATE="${DAYS_LATE}D${HOURS_LATE}H${MIN_LATE}M"
 
 if [[ -z "${TIME_LIMIT}" ]] ; then
   DUE_DATE="${DUE_DATE}"

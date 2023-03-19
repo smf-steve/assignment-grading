@@ -865,8 +865,9 @@ function checkout_date () {
         git checkout ${_hash}  1>/dev/null 2>&1
         echo                              
 
-        git log --decorate=full --oneline -1 
+        git log --decorate=full --oneline
         # add the author to the top to get ride of the prof's updates if any
+        # here we don't care if the author is the prof.  it is what is is on that particular date
         echo
       } > ${STUDENT_ACTIVITY_REPORT}
     else 
