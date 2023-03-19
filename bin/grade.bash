@@ -69,8 +69,8 @@
 #     - cd "<xx-assignment>"
 #     - grade_start
 #     - pull_submissions "<account>"
-#     - grade_submission "<account>" [ commit ]
-#     - regrade_submission "<account>" [ commit ]
+#     - grade_submission "<account>" [ commit | -- ]
+#     - regrade_submission "<account>" [ commit | -- ]
 #     - publish_grades "<account>"
 #
 #   Aux commands, meant to be called internally
@@ -429,13 +429,15 @@ function grade_submission () {
     cd $_dir
     source "${GIT_STATISTICS_BASH}"
 
-    # Checkout the version to be graded.  Either
-    #  - they did not effectively submit something
-    #  - they have a submission based upon due_date, etc
-    #  - a specific commit hash was provided.
-    git checkout ${ACCEPT_HASH} >/dev/null 2>&1
-    [[ -n "${SUBMISSION_HASH}" ]] && git checkout ${SUBMISSION_HASH} >/dev/null 2>&1
-    [[ -n "${_commit}" ]] && get checkout ${_commit} >/dev/null 2>&1
+    if [[ "${_commit}" != "--" ]] ; then 
+      # Checkout the version to be graded.  Either
+      #  - they did not effectively submit something
+      #  - they have a submission based upon due_date, etc
+      #  - a specific commit hash was provided.
+      git checkout ${ACCEPT_HASH} >/dev/null 2>&1
+      [[ -n "${SUBMISSION_HASH}" ]] && git checkout ${SUBMISSION_HASH} >/dev/null 2>&1
+      [[ -n "${_commit}" ]] && get checkout ${_commit} >/dev/null 2>&1
+    fi
 
 
     git branch ${GRADING_BRANCH} >/dev/null 2>&1
@@ -511,7 +513,13 @@ function grade_submission () {
     rm -f ${STUDENT_GRADE_REPORT}
     _score=0
     # Add the grade.report prologue
-    echo "Grading $_student" > $terminal
+    {
+      echo "Grading $_student" 
+      echo 
+      echo ag_show_commit_log ${DUE_DATE}
+      echo
+    } > $terminal
+
     { 
       echo "# Grading Report"
       echo "# Github Account: ${_student}"
