@@ -362,7 +362,7 @@ function relative_filename() {
 function regrade_submissions () {
   _grading_count=0
 
-  assert_submission_roster || return $?
+  assert_class_roster || return $?
 
   {
     echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
@@ -414,18 +414,24 @@ function grade_submission () {
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
 
   echo "--------------" > $terminal
+  (( _grading_count ++ ))
+  echo "Grading Count: $_grading_count" > $terminal
   echo "Grading $_student" > $terminal
+
   if [[ ! -d $_dir ]] ; then
-    printf "Error student did not accept assignment\n" > $terminal
-    printf "$_student: -1\t\t# Did not ACCEPT assignment\n" >>${CLASS_GRADE_REPORT}
+    printf "\tStudent did not accept assignment\.n" > $terminal
+    printf "%-20s %3d\t\t# Did not ACCEPT assignment\n"  $_student: -1 >>${CLASS_GRADE_REPORT}
     return
   fi
 
   (
-    echo "# Count: $_grading_count" > $terminal
-    (( _grading_count ++ ))
-
     cd $_dir
+    git branch ${GRADING_BRANCH} >/dev/null 2>&1
+    if (( $? != 0 )) ; then
+      echo "\tStudent's repo has already been graded.\n"
+      return
+    fi
+
     source "${GIT_STATISTICS_BASH}"
 
     if [[ "${_commit}" != "--" ]] ; then 
@@ -439,11 +445,6 @@ function grade_submission () {
     fi
 
 
-    git branch ${GRADING_BRANCH} >/dev/null 2>&1
-    if (( $? != 0 )) ; then
-      echo "Error: This repo has already been graded"
-      return
-    fi
     git tag ${SUBMISSION_TAG}
     # git checkout ${GRADING_BRANCH} >/dev/null 2>&1
     # You only need to checkout the grading branch when you perform
@@ -562,7 +563,7 @@ function grade_submission () {
       echo ; 
     } > $terminal
 
-    printf "%20s %3d\t\t#" $_student: $_score
+    printf "-%20s %3d\t\t#" $_student: $_score
 
     if [[ -z ${MINUTES_LATE} ]] ; then
       printf "\n" 
@@ -598,7 +599,7 @@ function input_list () {
 function grade_submissions () {
   _grading_count=0
 
-  assert_submission_roster || return $?
+  assert_class_roster || return $?
 
   {
     echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
@@ -618,31 +619,25 @@ function grade_submissions () {
 
 function reset_grading () {
 
-  assert_submission_roster || return $?
+  assert_class_roster || return $?
 
   {
-    echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
-  } >> "${GRADING_LOG}" 2>&1
+    echo "# Resetting grading: $(date)"
+  } >> "${GRADING_LOG}"
 
 
   for _student in $(input_list "$@") ; do
     (
-      cd ${SUBMISSION_DIR}/$i
+      cd ${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-$_student
         # [[ -f "${CLASS_GRADE_REPORT}" ]] && {
         #   mv ${CLASS_GRADE_REPORT} ${CLASS_GRADE_REPORT}.$(date "+%Y:%m:%d:%H:%M")
         #   mv ${SUBMISSION_ROSTER} ${SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
         #   mv ${NON_SUBMISSION_ROSTER} ${NON_SUBMISSION_ROSTER}.$(date "+%Y:%m:%d:%H:%M")
         #}
-      git -C ${SUBMISSION_DIR}/$i branch -d ${GRADING_BRANCH}
-      git -C ${SUBMISSION_DIR}/$i tag -d ${SUBMISSION_TAG}
+      git branch -d ${GRADING_BRANCH}
+      git tag -d ${SUBMISSION_TAG}
     )
-  done 2> /dev/null
-
-  {
-    echo "# -------------------------------------"
-    echo
-  } >> "${GRADING_LOG}" 2>&1
-
+  done > /dev/null  2>&1
 }
 
 
@@ -670,7 +665,7 @@ function clone_submission () {
 }
 function clone_submissions () {
 
-  assert_submission_roster || return $?
+  assert_class_roster || return $?
 
   { 
     echo "Cloning Submissions:" $(date)
@@ -693,19 +688,20 @@ function pull_submission () {
 
    if [[ -d "${_dir}" ]] ; then 
      ( 
+       cd "${_dir}"
        git checkout main
-       git pull --no-edit  2>> ${GRADING_LOG}
+       git pull --no-edit
        if [ $? == 0 ] ; then
-         echo "Pulled: ${_student}"
+         echo "Pulled: ${_student}" 
        else
-         echo "Error Pulling: ${_student}"
-       fi 
-     )
+         echo "Error Pulling: ${_student}" 
+       fi > $terminal
+     ) >/dev/null 2>> ${GRADING_LOG}
    fi
 }
 function pull_submissions () {
 
-  assert_submission_roster || return $?
+  assert_class_roster || return $?
 
   { 
     echo "Pulling submissions: $(date)"
@@ -743,7 +739,7 @@ function commit_grade () {
   fi
 }
 function commit_grades () {
-  assert_submission_roster || return $?
+  assert_class_roster || return $?
 
   { 
     echo "Committing grades: $(date)"
@@ -775,7 +771,7 @@ function publish_grade () {
 }
 function publish_grades () {
 
- assert_submission_roster || return $?
+ assert_class_roster || return $?
 
   {
     echo "# Publishing Grades: ${ASSIGNMENT_NAME} $(date)"
@@ -879,7 +875,7 @@ function checkout_date () {
 function checkout_due_date () {
   _date=${1}
 
-  assert_submission_roster || return $?
+  assert_class_roster || return $?
 
   [[ -z ${_date} ]] && [[ -f due_date ]] && _date="$(cat_nocomments due_date)"
   [[ -z ${_date} ]] && return
@@ -894,12 +890,12 @@ function checkout_due_date () {
 }  
 
 
-function assert_submission_roster () {
-  if [[ ! -f "${SUBMISSION_ROSTER}" ]] ; then
-    echo "Error: No Submission Roster" 
-    return 2
-  fi 
-}
+# function assert_class_roster () {
+#   if [[ ! -f "${SUBMISSION_ROSTER}" ]] ; then
+#     echo "Error: No Submission Roster" 
+#     return 2
+#   fi 
+# }
 
 function assert_class_roster () {
   if [[ ! -f ${CLASS_ROSTER} ]] ; then 
@@ -907,12 +903,13 @@ function assert_class_roster () {
      echo "Error: Grading Roster \"../$_l\" not found."
      return 1
   fi
+  return 0
 }
 
 function apply_all () {
   _CMD="$*"
 
-  assert_submission_roster || return $?
+  assert_class_roster || return $?
 
   { 
     echo "Apply_all (\"$_CMD\"): $(date)"
