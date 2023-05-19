@@ -153,62 +153,67 @@ else
   DUE_DATE="${TIMELIMIT_DUE_DATE}"
 fi
 
-cat > ${STUDENT_STAT_REPORT} <<EOF
-# Git Statistics Report
-# Github Account: ${_student}
-# Assignment: "${ASSIGNMENT_NAME}"
-# Assignment ID: "${ASSIGNMENT_ID}"
-# --- Due Date:        "${DUE_DATE}"
-# --- Submission Date: "${SUBMISSION_DATE}"
-# --- Tag & Hash:      "${SUBMISSION_TAG} (${SUBMISSION_HASH})"
-
-STATUS="${STATUS}"
-EOF
-if [[ ${STATUS} != "Submission On Time" ]] ; then
-  echo MINUTES_LATE=\"${MINUTES_LATE}\"
-fi >> ${STUDENT_STAT_REPORT} 
-if [[ "${GRACE_PERIOD}" != "None Given" ]] ; then
- echo "GRACE_PERIOD=\"${GRACE_PERIOD}\""
-fi >> ${STUDENT_STAT_REPORT}
-
-
-if [[ -z "${TIME_LIMIT}" ]] ; then
-  echo
-  echo "DUE_DATE=\"${DUE_DATE}\""
-else
-  echo
-  echo "ACCEPT_DATE=\"${ACCEPT_DATE}\""
-  echo " TIME_LIMIT=\"${TIME_LIMIT}\""
-  echo "   DUE_DATE=\"${DUE_DATE}\""
-  echo "CUTOFF_DATE=\"${CUTOFF_DATE}\""
-fi >> ${STUDENT_STAT_REPORT} 
-
-
-cat >> ${STUDENT_STAT_REPORT} <<EOF
-
-TAGS=(
-$(git tag)
-)
-
-NUM_COMMITS="${NUM_COMMITS}"
-NUM_COMMITS_POST_SUBMISSION="${NUM_COMMITS_POST_SUBMISSION}"
-NUM_COMMITS_PRE_SUBMISSION="${NUM_COMMITS_PRE_SUBMISSION}"
-
-LAST_COMMIT_HASH="${LAST_COMMIT_INFO[0]}"
-LAST_COMMIT_TS="${LAST_COMMIT_INFO[1]}"
-LAST_COMMIT_DATE="$(date -r ${LAST_COMMIT_INFO[1]} '+%b %d %T')"
-
-SUBMISSION_HASH="${SUBMISSION_HASH}"
-SUBMISSION_TS="${SUBMISSION_TS}"
-SUBMISSION_DATE="${SUBMISSION_DATE}"
-
-ACCEPT_HASH="${ACCEPT_INFO[0]}"
+ACEPT_HASH="${ACCEPT_INFO[0]}"
 ACCEPT_TS="${ACCEPT_INFO[1]}"
 ACCEPT_DATE="$(date -r ${ACCEPT_INFO[1]} '+%b %d %T')"
 
-EOF
 
-
-source ${STUDENT_STAT_REPORT}
- 
+#cat > ${STUDENT_STAT_REPORT} <<EOF
+#  # Git Statistics Report
+#  # Github Account: ${_student}
+#  # Assignment: "${ASSIGNMENT_NAME}"
+#  # Assignment ID: "${ASSIGNMENT_ID}"
+#  # --- Due Date:        "${DUE_DATE}"
+#  # --- Submission Date: "${SUBMISSION_DATE}"
+#  # --- Tag & Hash:      "${SUBMISSION_TAG} (${SUBMISSION_HASH})"
+#  
+#  STATUS="${STATUS}"
+#  EOF
+#  if [[ ${STATUS} != "Submission On Time" ]] ; then
+#    echo MINUTES_LATE=\"${MINUTES_LATE}\"
+#  fi >> ${STUDENT_STAT_REPORT} 
+#  if [[ "${GRACE_PERIOD}" != "None Given" ]] ; then
+#   echo "GRACE_PERIOD=\"${GRACE_PERIOD}\""
+#  fi >> ${STUDENT_STAT_REPORT}
+#  
+#  
+#  if [[ -z "${TIME_LIMIT}" ]] ; then
+#    echo
+#    echo "DUE_DATE=\"${DUE_DATE}\""
+#  else
+#    echo
+#    echo "ACCEPT_DATE=\"${ACCEPT_DATE}\""
+#    echo " TIME_LIMIT=\"${TIME_LIMIT}\""
+#    echo "   DUE_DATE=\"${DUE_DATE}\""
+#    echo "CUTOFF_DATE=\"${CUTOFF_DATE}\""
+#  fi >> ${STUDENT_STAT_REPORT} 
+#  
+#  
+#  cat >> ${STUDENT_STAT_REPORT} <<EOF
+#  
+#  TAGS=(
+#  $(git tag)
+#  )
+#  
+#  NUM_COMMITS="${NUM_COMMITS}"
+#  NUM_COMMITS_POST_SUBMISSION="${NUM_COMMITS_POST_SUBMISSION}"
+#  NUM_COMMITS_PRE_SUBMISSION="${NUM_COMMITS_PRE_SUBMISSION}"
+#  
+#  LAST_COMMIT_HASH="${LAST_COMMIT_INFO[0]}"
+#  LAST_COMMIT_TS="${LAST_COMMIT_INFO[1]}"
+#  LAST_COMMIT_DATE="$(date -r ${LAST_COMMIT_INFO[1]} '+%b %d %T')"
+#  
+#  SUBMISSION_HASH="${SUBMISSION_HASH}"
+#  SUBMISSION_TS="${SUBMISSION_TS}"
+#  SUBMISSION_DATE="${SUBMISSION_DATE}"
+#  
+#  ACCEPT_HASH="${ACCEPT_INFO[0]}"
+#  ACCEPT_TS="${ACCEPT_INFO[1]}"
+#  ACCEPT_DATE="$(date -r ${ACCEPT_INFO[1]} '+%b %d %T')"
+#  
+#  EOF
+#  
+#  
+#  source ${STUDENT_STAT_REPORT}
+#   
 

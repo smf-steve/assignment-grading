@@ -146,7 +146,7 @@ STUDENT_SUBMISSION_FILE="submission.md"           # Contained within the student
 
 STUDENT_ANSWER_KEY="answers.md"                   # To be added to the student's repo
 STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
-STUDENT_STAT_REPORT="statistics.report"           # To be added to the student's repo
+#STUDENT_STAT_REPORT="statistics.report"           # To be added to the student's repo
 
 STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to checkout_date, this file contains the git log before this date
                                                   # Otherwise the file is empty
@@ -408,7 +408,6 @@ function regrade_submission () {
       if [[ -n $(git ls-files ${STUDENT_GRADE_REPORT}) ]] ; then 
         # We are tracking and this committed it, so untrack the files
         git rm ${STUDENT_GRADE_REPORT}
-        git rm ${STUDENT_STAT_REPORT}
         git commit -m 'Regrading'
       fi
     ) > /dev/null 2>> ${GRADING_LOG}
@@ -769,9 +768,8 @@ function commit_grade () {
         git add ${STUDENT_ANSWER_KEY}
         git commit -m 'Added Answers File' ${STUDENT_ANSWER_KEY}
       fi
-      git add ${STUDENT_GRADE_REPORT} ${STUDENT_STAT_REPORT}
+      git add ${STUDENT_GRADE_REPORT}
       git commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT} 
-      git commit -m 'Added Statistics Report' ${STUDENT_STAT_REPORT}
       git checkout main 2>$terminal
       git pull
       git merge --no-ff -m 'merging grading information' ${GRADING_BRANCH}
