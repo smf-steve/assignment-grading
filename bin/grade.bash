@@ -146,7 +146,6 @@ STUDENT_SUBMISSION_FILE="submission.md"           # Contained within the student
 
 STUDENT_ANSWER_KEY="answers.md"                   # To be added to the student's repo
 STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
-#STUDENT_STAT_REPORT="statistics.report"           # To be added to the student's repo
 
 STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to checkout_date, this file contains the git log before this date
                                                   # Otherwise the file is empty
