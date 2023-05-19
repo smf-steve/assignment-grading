@@ -180,7 +180,7 @@ else
   echo "ACCEPT_DATE=\"${ACCEPT_DATE}\""
   echo " TIME_LIMIT=\"${TIME_LIMIT}\""
   echo "   DUE_DATE=\"${DUE_DATE}\""
-  echo CUTOFF_DATE=\"${CUTOFF_DATE}\"
+  echo "CUTOFF_DATE=\"${CUTOFF_DATE}\""
 fi >> ${STUDENT_STAT_REPORT} 
 
 
