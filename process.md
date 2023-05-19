@@ -2,6 +2,15 @@
 
 ## Prerequisites:
    - Establish a Github Account (with ssh-key authentication)
+   - Configure a user.name and user.email value in your global git config file
+     ```
+     git config --set user.name=""
+     git config --set user.email=""
+     ```
+    -- not this this must be the same as what is set for github website, etc.
+    --  becaue when you build the template directory this is what is is set to be.
+
+
    - Create a Github Organization for a GitHub Classroom: *${GITHUB_ORG}*
    - Enroll in Github Classroom
    - Create a Github Classroom and identify it's URL: *${CLASSROOM_URL}*
@@ -13,14 +22,12 @@ This software package and it's define file structure has been designed to suppor
 The following example shows how I installed the software for my COMP122 class.
   1. Install this software package.
      ```
-     mkdir -p ~/comp122
-     cd ~/comp122            # ${CLASSROOM_DIR}
-     git clone git@github.com:smf-steve/assignment-grading.git
-     cd assignment-grading
+    see revised instructins
      ```
-  1. Update the .grading.env file to provide information about the GitHub Classroom.
+  1. Create a directory for your class and then a grading directory
      ```
-     GITHUB_ORG="CIT122"
+     mkdir -p ~/.../directory
+     create_grading_dir COMP122
      ```
   1. Create a text file, called roster, that contains a list of all of the student's Github Accounts.
      ```
