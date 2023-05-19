@@ -959,7 +959,8 @@ function assert_class_roster () {
 }
 
 function apply_all () {
-  _CMD="$*"
+  _CMD="$1"
+  shift
 
   assert_class_roster || return $?
 
@@ -985,7 +986,8 @@ function ag_show_commit_log () {
   
   echo "STUDENT COMMIT HISTORY:"
   echo
-  git log --format=" %h %%%an%% %cd %d"  --date="format: %b %d %H:%M %z" --graph  --after "${DUE_DATE}" origin/main |
+  git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
+          --graph  --after "${DUE_DATE}" origin/main |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
 
   if [[ -z ${DUE_DATE} ]] ; then
@@ -993,7 +995,8 @@ function ag_show_commit_log () {
   else
     echo "* Due Date: ${DUE_DATE}  -----------------"
   fi
-  git log --format=" %h %%%an%% %cd %d"  --date="format: %b %d %H:%M %z" --graph  --before "${DUE_DATE}" origin/main|
+  git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
+          --graph  --before "${DUE_DATE}" --after "${ACCEPT_DATE}" origin/main|
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
   echo
 
