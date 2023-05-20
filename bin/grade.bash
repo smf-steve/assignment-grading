@@ -415,8 +415,8 @@ function ag_regrade_submission () {
       git branch -D ${GRADING_BRANCH}
       git tag -d ${SUBMISSION_TAG}
       if [[ -n $(git ls-files ${STUDENT_GRADE_REPORT}) ]] ; then 
-        # We are tracking and this committed it, so untrack the files
-        git rm ${STUDENT_GRADE_REPORT}
+        # We are tracking a previous grade_report, so move the old grade report
+        git mv ${STUDENT_GRADE_REPORT} ${STUDENT_GRADE_REPORT}.$(date '+%m-%d-%T')
         git commit -m 'Regrading'
       fi
     ) > /dev/null 2>> ${GRADING_LOG}
@@ -481,7 +481,7 @@ function ag_grade_submission () {
     cd $_dir
     git branch ${GRADING_BRANCH} >/dev/null 2>&1
     if (( $? != 0 )) ; then
-      printf "\tStudent's repo has already been graded.\n"
+      printf "\tStudent's repository has already been graded.\n"
       return
     fi
 
@@ -547,7 +547,7 @@ function ag_grade_submission () {
     ##    - if Paper Assignment - no Submission file
     ##    - Submission_File could be: foo.java, etc, 
     ## 1. effectively no work done by the student
-    ##    - if Paper Assignment-- Submission file ~=== Assigment File
+    ##    - if Paper Assignment-- Submission file ~=== Assignment File
     ##    - number of commit
 
     #######################################################
@@ -862,7 +862,7 @@ function grade_join () {
 # removing blank lines
 # removing tabs
 # convert  "student: grade" --> "student, grade"
-# sort in case insenstive the resulting file
+# sort in case insensitive the resulting file
 # if no dups, then join with class roster to ensure all have a recorded grade.
 function grades2csv () {
    _file="$1"
@@ -874,7 +874,7 @@ function grades2csv () {
      echo "$_file: Multiple grades for some students" 1>&2
    else
      #  The "join" utility seems to be broken on MacOS
-     #  The "join" on RedHat does not allow hypens in the key 
+     #  The "join" on RedHat does not allow hyphens in the key 
      grade_join ${CLASS_ROSTER} $_base.prep >$_base.csv
    fi
    rm $_base.prep
@@ -899,7 +899,7 @@ function generate_excel_cells () {
    done  
 }
 
-## Following is now defunct due to timelime due.date information
+## Following is now defunct due to timeline due.date information
 
 function checkout_date () {
   _date=${1}
