@@ -6,6 +6,14 @@ trap 'rm .$$_full.log' 0
 # time_limit="2H"  # 120M
 # grace_period="2M"   # 2 minutes
 
+### The following appear to be the variables that are used in grade.bash
+##
+# STATUS
+# SUBMISSION_HASH
+# SUBMISSION_DATE
+# ACCEPT_HASH
+# ACCEPT_DATE
+
 RELEASE_DATE_FILE="${ASSIGNMENT_DIR}/release_date"
 DUE_DATE_FILE="${ASSIGNMENT_DIR}/due_date"
 TIME_LIMIT_FILE="${ASSIGNMENT_DIR}/time_limit"
