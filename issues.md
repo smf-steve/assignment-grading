@@ -1,6 +1,5 @@
 # Issues and Improvements
-
-
+   
 ## Process Issues:
 After using this system to grade student submissions for two semesters, here is a list of common issues encountered.
 
@@ -75,24 +74,9 @@ After using this system to grade student submissions for two semesters, here is 
    1. There is also a non submission list
    1. Need a process by which the two files can be added, with
       the earliest duplicate removed
-
+   1. Maybe add a timestamp at the end of each line as a commit.
+      - then we can compare at the end.
+      
 1. Consider Introducting a NAMESPACE prefix for Environment variables: - GRADE_ ?
 
-1. Rename ENVs to clearly identify which are 
-   - relative to the student repo (relative URLs)
-   - relative to the assignment (absolute URLs)
-
-1. Reconsider the name of these functions to be more consistent
-   ```
-   clone_submission () 
-   clone_submissions () 
-   grade_start () 
-   grade_submission () 
-   grade_submissions () 
-   publish_grade () 
-   publish_grades () 
-   pull_submission () 
-   pull_submissions () 
-   reset_grading ()
-   ```
 
