@@ -52,26 +52,31 @@
 #     - grade_start
 #
 #   To perform various grading steps
-#     - reset_grading       [ | file | args... ]
-#     - clone_submissions   [ | file | args... ]
-#     - pull_submissions    [ | file | args... ]
-#     - grade_submissions   [ | file | args... ]
-#     - regrade_submissions [ | file | args... ]
-#     - commit_grades       [ | file | args... ]
-#     - publish_grades      [ | file | args... ]
+#     - reset_grading       [ file | account ... ]
+#     - clone_submissions   [ file | account ... ]
+#     - pull_submissions    [ file | account ... ]
+#     - grade_submissions   [--commit ] [ file | account ... ]
+#     - regrade_submissions [--commit ] [ file | account ... ]
+#     - commit_grades       [ file | args... ]
+#     - publish_grades      [ file | args... ]
 #          - zero args: operate on all students in the class_roster
 #          - one arg that is a file: operate on each students enumerated in the file
-#          - one or more args:  operate on each argument
+#          - one or more args:  operate on each argument which is a student account
+#          * The --commit, indicates what version of the software should be checked out
+#             **  -- indicates use the current version
+#             **  --hash indicates use the hash/tag version
+#             **  otherwise, use the hash associated with the due.date, etc.
 #
 #     - recreate_class_grade_report
 #
-#   For re/grade a single student
-#     - cd "<xx-assignment>"
-#     - grade_start
-#     - pull_submissions "<account>"
-#     - grade_submission "<account>" [ commit | -- ]
-#     - regrade_submission "<account>" [ commit | -- ]
-#     - publish_grades "<account>"
+# ###  ag_ is the prefix for AssignmentGrading
+# #   For re/grade a single student
+# #     - cd "<xx-assignment>"
+# #     - grade_start
+# #     - ag_pull_submission "<account>"
+# #     - ag_grade_submission [ --commit ] "<account>" 
+# #     - ag_regrade_submission [ --commit ] "<account>" 
+# #     - publish_grades "<account>"
 #
 #   Aux commands, meant to be called internally
 #     - ag_show_commit_log 
@@ -316,6 +321,8 @@ function grade_start () {
     return 1
   fi
   source ${ASSIGNMENT_ENV}
+  PS1="(grading:$ASSIGNMENT_ID- \W)$ "
+
   terminal=$(tty)
 
   # Rerun these commands, in case of any updates after the initial `grade_start` is executed
@@ -367,6 +374,13 @@ function relative_filename() {
 
 function regrade_submissions () {
   _grading_count=0
+  _commit_provided="$1"
+
+  if [[ "${_commit_provided:0:2}"  == "--" ]] ; then
+    shift
+  else
+    _commit_provided=
+  fi
 
   assert_class_roster || return $?
 
@@ -380,7 +394,7 @@ function regrade_submissions () {
 
 
   for _student in $(input_list "$@") ; do
-    regrade_submission ${_student}
+    ag_regrade_submission ${_student} "$_commit_provided"
   done
 
   {
@@ -389,19 +403,15 @@ function regrade_submissions () {
   } >> "${CLASS_GRADE_REPORT}"
 }
 
-function regrade_submission () {
+function ag_regrade_submission () {
   _student=${1}
   _commit=${2}
-  
-  # Remove previously grading information
-  
 
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
-  
   if [[ -d ${_dir} ]] ; then 
     (
       cd $_dir 
-      git checkout main 2>$terminal
+      git checkout main >/dev/null 2>&1
       git branch -D ${GRADING_BRANCH}
       git tag -d ${SUBMISSION_TAG}
       if [[ -n $(git ls-files ${STUDENT_GRADE_REPORT}) ]] ; then 
@@ -412,15 +422,45 @@ function regrade_submission () {
     ) > /dev/null 2>> ${GRADING_LOG}
   fi
 
-  grade_submission "$_student" "$_commit"
+  ag_grade_submission "$_student" "$_commit"
 }
 
 
-function grade_submission () {
+function grade_submissions () {
+  _grading_count=0
+  _commit_provided="$1"
+
+  if [[ "${_commit_provided:0:2}"  == "--" ]] ; then
+    shift
+  else
+    _commit_provided=
+  fi
+
+  assert_class_roster || return $?
+
+  { 
+    echo "Grading Submissions:" $(date)
+  } >> ${GRADING_LOG}
+  {
+    echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
+  } >> "${CLASS_GRADE_REPORT}"
+
+  for _student in $(input_list "$@") ; do
+    ag_grade_submission ${_student} "$_commit_provided"
+  done
+
+  {
+    echo "# -------------------------------------"
+    echo
+  } >> "${CLASS_GRADE_REPORT}"
+}
+
+function ag_grade_submission () {
   not_acceptted=-1
   only_accepted=-1
   _student=${1}
-  _commit=${2}
+  _commit_provided=${2:0:2}
+  _commit=${2:2}
 
   source ${ASSIGNMENT_ENV}
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
@@ -447,13 +487,15 @@ function grade_submission () {
 
     source "${GIT_STATISTICS_BASH}"
 
-    if [[ "${_commit}" != "--" ]] ; then 
+    if [[ "${_commit_provided}" == "--" && -z "${_commit}" ]] ; then 
+      : # Use the current checkout version
+    else
       # Checkout the version to be graded.  Either
       #  - they did not effectively submit something, The SUBMISSION_HASH==ACCEPT_HASH
       #  - they have a submission based upon due_date, etc, SUBMISSION_HASH is just pre due-date
       #  - a specific commit hash was provided.
-      git checkout ${SUBMISSION_HASH}  2>$terminal
-      [[ -n "${_commit}" ]] && git checkout ${_commit}  2>$terminal
+      git checkout ${SUBMISSION_HASH}  >/dev/null 2>&1
+      [[ -n "${_commit}" ]] && git checkout ${_commit}  >/dev/null 2>&1
     fi
 
     # Now reset the Submission Info based upon what was done above 
@@ -520,7 +562,7 @@ function grade_submission () {
         echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
         echo
       }  >> ${STUDENT_GRADE_REPORT}
-      git checkout main
+      git checkout main >/dev/null 2>&1
       return
     fi
 
@@ -542,7 +584,7 @@ function grade_submission () {
           echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
           echo
         }  >> ${STUDENT_GRADE_REPORT}
-        git checkout main
+        git checkout main >/dev/null 2>&1
         return
       fi
 
@@ -556,10 +598,10 @@ function grade_submission () {
         { 
           echo "Submission file has not been updated: ${STUDENT_SUBMISSION_FILE}"
           echo
-          echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$score\"         # ${_student}"
+          echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"         # ${_student}"
           echo
         }  >> ${STUDENT_GRADE_REPORT} 
-        git checkout main
+        git checkout main  >/dev/null 2>&1
         return
       fi
       #######################################################
@@ -616,7 +658,7 @@ function grade_submission () {
     } >>${CLASS_GRADE_REPORT}
 
     # Go back to the Canonical HEAD
-    git checkout main >$terminal  > /dev/null 2>${GRADING_LOG}
+    git checkout main  >/dev/null 2>&1
   ) 
 }
 
@@ -643,29 +685,6 @@ function input_list () {
 }
 
 
-function grade_submissions () {
-  _grading_count=0
-
-  assert_class_roster || return $?
-
-  { 
-    echo "Grading Submissions:" $(date)
-  } >> ${GRADING_LOG}
-  {
-    echo "# Grade Report: ${ASSIGNMENT_NAME} $(date)"
-  } >> "${CLASS_GRADE_REPORT}"
-
-  for _student in $(input_list "$@") ; do
-    grade_submission ${_student}
-  done
-
-  {
-    echo "# -------------------------------------"
-    echo
-  } >> "${CLASS_GRADE_REPORT}"
-}
-
-
 function reset_grading () {
 
   assert_class_roster || return $?
@@ -685,17 +704,12 @@ function reset_grading () {
 }
 
 
-function clone_submission () {
-    
-  if [[ -z "${1}" ]] ; then
-    echo "Usage: clone_submission student"
-    return 1
-  fi 
+function ag_clone_submission () {
   _student="${1}"
 
   if [[ -d ${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student} ]] ; then
     echo "Previously Cloned -- pulling: ${_student}"
-    pull_submission $_student
+    ag_pull_submission $_student
   else 
     git -C ${SUBMISSION_DIR} clone ${STUDENT_BASE_URL}-${_student}.git >> ${GRADING_LOG} 2>/dev/null
     if [ $? == 0 ] ; then
@@ -714,24 +728,19 @@ function clone_submissions () {
   } >> ${GRADING_LOG}
 
   for _student in $(input_list "$@") ; do
-    clone_submission ${_student}
+    ag_clone_submission ${_student}
   done 2> /dev/null
 }  
 
 
-function pull_submission () {
-   if [[ -z "${1}" ]] ; then
-    echo "Usage: pull_submission student"
-    return 1
-   fi 
+function ag_pull_submission () {
    _student=${1}
 
    _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
-
    if [[ -d "${_dir}" ]] ; then 
      ( 
        cd "${_dir}"
-       git checkout main 2>$terminal
+       git checkout main >/dev/null 2>&1
        git pull --no-edit
        if [ $? == 0 ] ; then
          echo "Pulled: ${_student}" 
@@ -750,7 +759,7 @@ function pull_submissions () {
   } >> ${GRADING_LOG}
 
   for _student in $(input_list "$@") ; do
-    pull_submission ${_student}
+    ag_pull_submission ${_student}
   done 
 }  
 
@@ -761,7 +770,7 @@ function commit_grade () {
   if [[ -d "${_dir}" ]] ; then
     ( 
       cd ${_dir} 
-      git checkout ${GRADING_BRANCH} 2>$terminal
+      git checkout ${GRADING_BRANCH} >/dev/null 2>&1
       if [[ -f ${KEY_ANSWER_FILE} ]] ; then
         cp ${KEY_ANSWER_FILE} .
         git add ${STUDENT_ANSWER_KEY}
@@ -769,7 +778,7 @@ function commit_grade () {
       fi
       git add ${STUDENT_GRADE_REPORT}
       git commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT} 
-      git checkout main 2>$terminal
+      git checkout main >/dev/null 2>&1
       git pull
       git merge --no-ff -m 'merging grading information' ${GRADING_BRANCH}
       if [[ $? != 0 ]] ; then
@@ -908,7 +917,7 @@ function checkout_date () {
         echo "# Checkout Date: ${_date}"
         echo "# Checkout Hash: ${_hash}"
         echo "# Log Entries before checkout date:"
-        git checkout ${_hash}  1>/dev/null 2>$terminal
+        git checkout ${_hash}  >/dev/null 2>&1
         echo                              
 
         git log --decorate=full --oneline
@@ -980,6 +989,9 @@ function apply_all () {
 function ag_show_commit_log () {
   DUE_DATE="$1"
 
+  if [[ -z "$DUE_DATE" ]] ; then
+    DUE_DATE="$(date '+%b %d %T')"
+  fi
   
   echo "STUDENT COMMIT HISTORY:"
   echo
@@ -993,7 +1005,7 @@ function ag_show_commit_log () {
     echo "* Due Date: ${DUE_DATE}  -----------------"
   fi
   git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
-          --graph  --before "${DUE_DATE}" --after "${ACCEPT_DATE}" origin/main|
+          --graph  --before "${DUE_DATE}" origin/main |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
   echo
 

@@ -47,17 +47,9 @@
   * commit_grades     [ nil | file | list-of-students ]
   * publish_grades    [ nil | file | list-of-students ]
 
-  * apply_all
+  * apply_all         [ nil | file | list-of-students ]
 
-### Individual Student Grading Functions
-  * grade_submission ${student}  [ ${commit} ]
-  * regrade_submission ${student} [ ${commit} ]
-     - saves previsous grade report
 
-## Student Content Review Functions 
-   -- generates:  activity.report
-  * checkout_date ${date} ${student}
-  * checkout_due_date ${student}
 
 ---
 ## Support Fuctions
