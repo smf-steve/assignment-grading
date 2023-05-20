@@ -50,6 +50,21 @@
   * apply_all         [ nil | file | list-of-students ]
 
 
+## Grace Period and timelimits
+Appears to be a bug 
+
+STATUS="Submission On Time"
+GRACE_PERIOD="4m"
+
+ACCEPT_DATE="Feb 19 19:45:09"
+ TIME_LIMIT="2H"
+   DUE_DATE="Jun 19 21:45:09"
+CUTOFF_DATE="Feb 19 23:59:59"
+
+Nop this is currect, 
+            you only get the grace period if it is submitted befor the cUTOFF_DATE
+
+
 
 ---
 ## Support Fuctions
