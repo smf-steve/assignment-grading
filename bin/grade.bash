@@ -55,18 +55,21 @@
 #     - reset_grading       [ file | account ... ]
 #     - clone_submissions   [ file | account ... ]
 #     - pull_submissions    [ file | account ... ]
-#     - grade_submissions   [--commit ] [ file | account ... ]
-#     - regrade_submissions [--commit ] [ file | account ... ]
+#     - checkout_due_date   [ date ]
+#     - grade_submissions   [--<commit> ] [ file | account ... ]   
+#       - Note: performs its own checkout of version
+#     - regrade_submissions [--<commit> ] [ file | account ... ]
 #     - commit_grades       [ file | args... ]
 #     - publish_grades      [ file | args... ]
 #          - zero args: operate on all students in the class_roster
 #          - one arg that is a file: operate on each students enumerated in the file
 #          - one or more args:  operate on each argument which is a student account
-#          * The --commit, indicates what version of the software should be checked out
+#          * The --<commit>, indicates what version of the software should be checked out
 #             **  -- indicates use the current version
 #             **  --hash indicates use the hash/tag version
 #             **  otherwise, use the hash associated with the due.date, etc.
 #
+#     - plot_grades
 #     - recreate_class_grade_report
 #
 # ###  ag_ is the prefix for AssignmentGrading
@@ -74,8 +77,8 @@
 # #     - cd "<xx-assignment>"
 # #     - grade_start
 # #     - ag_pull_submission "<account>"
-# #     - ag_grade_submission [ --commit ] "<account>" 
-# #     - ag_regrade_submission [ --commit ] "<account>" 
+# #     - ag_grade_submission "<account>"  [ <commit> ] 
+# #     - ag_regrade_submission "<account>" [ <commit> ]  
 # #     - publish_grades "<account>"
 #
 #   Aux commands, meant to be called internally
@@ -236,13 +239,13 @@ function create_grading_dir () {
   fi
 
   if [[ -e "${ASSIGNMENT_GRADING_DIR}" ]] ; then
-    echo "\"Assignment Grading\" directory already exists"
+    echo "\"${ASSIGNMENT_GRADING_DIR}\" directory already exists"
     return 2;
   fi
 
   mkdir ${ASSIGNMENT_GRADING_DIR}
   create_grading_env ${GITHUB_CLASSROOM} > ${GRADING_ENV}
-  ( cd ${ASSIGNMENT_GRADING_DIR} ; create_assignment xx-sample-assignment )
+  ( cd ${ASSIGNMENT_GRADING_DIR} ; create_assignment xx-sample-assignment >/dev/null ) 
 }
 
 
@@ -568,6 +571,8 @@ function ag_grade_submission () {
 
     if [[  -f ${STUDENT_ASSIGNMENT_FILE} ]] ; then
       # This is a paper submission, 
+      # Note that if a student creates the assignment.md file -- JUST because
+      #   and this is NOT a paper submission -- this breaks.
 
       if [[ ! -f ${STUDENT_SUBMISSION_FILE} ]] ; then
         # Nothing Submitted
@@ -617,16 +622,20 @@ function ag_grade_submission () {
     [[ ! -f ${MAKE_FILE} ]] && MAKE_FILE=${ASSIGNMENT_MAKEFILE}
     [[ ! -s ${MAKE_FILE} ]] && MAKE_FILE=${CLASS_MAKEFILE}
     
-    make -f ${MAKE_FILE}
+    make -f ${MAKE_FILE} grade
 
     # Prompt the Professor for items related to the rubric
     {
       # For each line in the rubric
       while read _line ; do
-        echo $_line          > $terminal
-        read _value _comment < $terminal
-        printf "  %2d Points:  $_line: $_comment\n" $_value
-        (( _score += _value ))
+        if [[ "$_line" == \#* ]] ; then
+          echo $_line
+        else
+          echo $_line          > $terminal
+          read _value _comment < $terminal
+          printf "  %2d Points:  $_line: $_comment\n" $_value
+          (( _score += _value ))
+        fi
       done < ${KEY_RUBRIC_FILE} >> ${STUDENT_GRADE_REPORT}
     }
 
@@ -693,10 +702,10 @@ function reset_grading () {
     echo "# Resetting grading: $(date)"
   } >> "${GRADING_LOG}"
 
-
   for _student in $(input_list "$@") ; do
     _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
     if [[ -d "$_dir" ]] ; then 
+      git -C ${_dir} checkout main
       git -C ${_dir} branch -d ${GRADING_BRANCH}
       git -C ${_dir} tag -d ${SUBMISSION_TAG}
     fi
@@ -901,7 +910,7 @@ function generate_excel_cells () {
 
 ## Following is now defunct due to timeline due.date information
 
-function checkout_date () {
+function ag_checkout_date () {
   _date=${1}
   _student=${2}
 
@@ -948,8 +957,8 @@ function checkout_due_date () {
 
   for _student in $(input_list "$@") ; do
     _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
-    if [[ -d "_dir" ]] ; then 
-      checkout_date "${_date}" ${_student} 
+    if [[ -d "$_dir" ]] ; then 
+      ag_checkout_date "${_date}" ${_student} 
     fi
   done 
 }  
@@ -1027,4 +1036,29 @@ function cat_nocomments () {
   sed -e 's/^ *#.*$//'  -e '/^ *$/d' "$@"
 }
 
+function average () {
+  while read _score ; do 
+     (( count++ ))
+     (( sum+= _score ))
+  done < data_grades
+  echo $(( sum / count  ))
+}
 
+function plot_grades () {
+
+  cat grades.txt | grep -v "^#" | awk '{ print $2}' | sort -n >data_grades
+  average=$(average)
+gnuplot <<EOF
+set term png
+set output "${ASSIGNMENT_NAME}-scores.png"
+set title "Scores: ${ASSIGNMENT_NAME}"
+set xlabel "Individual Student Submission"
+set ylabel "Assigned Grade"
+set xrange [0:105]
+set format x ""
+set xtics 1,1
+unset key
+plot [0:80][-5:105] $average, "data_grades" with linespoints
+EOF
+
+}
