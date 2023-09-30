@@ -1,19 +1,19 @@
 # Installation, Assignment, and Grading Process
 
 ## Prerequisites:
-   - Establish a Github Account (with ssh-key authentication)
+   - Establish a GitHub Account (with ssh-key authentication)
    - Configure a user.name and user.email value in your global git config file
      ```
      git config --set user.name=""
      git config --set user.email=""
      ```
     -- not this this must be the same as what is set for github website, etc.
-    --  becaue when you build the template directory this is what is is set to be.
+    --  because when you build the template directory this is what is is set to be.
 
 
-   - Create a Github Organization for a GitHub Classroom: *${GITHUB_ORG}*
-   - Enroll in Github Classroom
-   - Create a Github Classroom and identify it's URL: *${CLASSROOM_URL}*
+   - Create a GitHub Organization for a GitHub Classroom: *${GITHUB_ORG}*
+   - Enroll in GitHub Classroom
+   - Create a GitHub Classroom and identify it's URL: *${CLASSROOM_URL}*
    - Upload a class roster, which students will use to link to their GitHub accounts.
 
 ## Installation Process for a Single Class (*${CLASSROOM_DIR}*)
@@ -22,15 +22,17 @@ This software package and it's define file structure has been designed to suppor
 The following example shows how I installed the software for my COMP122 class.
   1. Install this software package.
      ```
-    see revised instructins
+    see revised instructions
      ```
   1. Create a directory for your class and then a grading directory
      ```
-     mkdir -p ~/.../directory
-     create_grading_dir COMP122
+     mkdir -p ~/.../comp122
+     cd ~/.../comp122
+     create_grading_dir COMP122    # COMP122 here is the name of the Github organization for your classroom
      ```
-  1. Create a text file, called roster, that contains a list of all of the student's Github Accounts.
+  1. Create a text file, called roster, that contains a list of all of the student's GitHub Accounts.
      ```
+     cd assignment-grading
      # download the classroom roster from github: classroom_roster.csv
      awk -F, '{print $2}' classroom_roster.csv | sed -e '1d' -e 's/"//g' > roster
      ```
@@ -73,8 +75,7 @@ The following example shows how I installed the software for my COMP122 class.
 
     
     ```
-    cd ~/comp122/assignment_grading
-    mkdir nn-assignment-name
+    cd ~/comp122/assignment_grading/nn-assignment-name
     ```
 
  1. Clone the assignment-solution repository into the `key` directory
@@ -84,18 +85,12 @@ The following example shows how I installed the software for my COMP122 class.
      ```
 
 
-1. Run the command to create the assigment
-
-
 ## Grading and Review Process
   1. Change your current working directory to be the assignment directory
      ```
      cd ~/comp122/assigment_grading
      cd nn-assignment-name
      ```
-
-  1. Source the grade.bash file:
-     - `source ../bin/grade.bash`  
 
   1. Execute various CLI commands within the assignment directory
      1. `grade_start`: to start the grading process, which reasserts the environment variables
