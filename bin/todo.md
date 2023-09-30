@@ -1,3 +1,30 @@
+Bug:
+   if it is a programming assignment
+   if they accepted the assignment after the due date
+   it defaults to grading the most recent verions
+   
+
+--
+Within github, assign all templates to there id number
+  first-assignment  => 01-first assignment
+
+Update the code to reflect this... it might be the case already
+
+---
+update the system to ignore comments in 
+  timelimit and graceperiod
+  add the default settings if you will to these filfes
+
+--
+change name of directory from 
+   key --> template
+
+-- 
+presume there is a defualt class file
+presume that file is put in to the right location with being described via the instructions
+
+  -- 
+  get rid of the notaion of the release date...or starte adding it.
 
 # Todo List:
 
