@@ -1,8 +1,3 @@
-Bug:
-   if it is a programming assignment
-   if they accepted the assignment after the due date
-   it defaults to grading the most recent verions
-   
 
 --
 Within github, assign all templates to there id number
