@@ -58,6 +58,7 @@
 #     - checkout_due_date   [ date ]
 #     - grade_submissions   [--<commit> ] [ file | account ... ]   
 #       - Note: performs its own checkout of version
+#       - Note: use the --<commit> option to override    
 #     - regrade_submissions [--<commit> ] [ file | account ... ]
 #     - commit_grades       [ file | args... ]
 #     - publish_grades      [ file | args... ]
@@ -459,7 +460,7 @@ function grade_submissions () {
 }
 
 function ag_grade_submission () {
-  not_acceptted=-1
+  not_accepted=-1
   only_accepted=-1
   _student=${1}
   _commit_provided=${2:0:2}
@@ -488,23 +489,24 @@ function ag_grade_submission () {
       return
     fi
 
+    # Use the script to determine which commit version to grade by due_date
     source "${GIT_STATISTICS_BASH}"
 
     if [[ "${_commit_provided}" == "--" && -z "${_commit}" ]] ; then 
       : # Use the current checkout version
     else
-      # Checkout the version to be graded.  Either
-      #  - they did not effectively submit something, The SUBMISSION_HASH==ACCEPT_HASH
-      #  - they have a submission based upon due_date, etc, SUBMISSION_HASH is just pre due-date
-      #  - a specific commit hash was provided.
-      git checkout ${SUBMISSION_HASH}  >/dev/null 2>&1
-      [[ -n "${_commit}" ]] && git checkout ${_commit}  >/dev/null 2>&1
+      # Set the _commit to be the SUBMISSION_HASH, if a _commit was not provided
+      [[ -n "${_commit}" ]] && _commit=${SUBMISSION_HASH}
     fi
 
-    # Now reset the Submission Info based upon what was done above 
-    SUBMISSION_HASH=$(git log --format="%h" --date="format:%b %d %T" -1)
-    SUBMISSION_DATE=$(git log --format="%cd" --date="format:%b %d %T" -1)
-    git tag ${SUBMISSION_TAG}
+    if [[ -n "${_commit}" ]] ; then 
+      git checkout ${_commit} >/dev/null 2>&1
+      SUBMISSION_HASH=$(git log --format="%h" --date="format:%b %d %T" -1)
+      SUBMISSION_DATE=$(git log --format="%cd" --date="format:%b %d %T" -1)
+      git tag ${SUBMISSION_TAG}
+    else
+      : # There is nothing to grade
+    fi
 
     {
       echo
@@ -528,8 +530,10 @@ function ag_grade_submission () {
          echo "# --- Due Date:        \"${DUE_DATE}\" (time limit: ${TIME_LIMIT})"
          echo "# --- Cutoff Date:     \"${CUTOFF_DATE}\"" 
        fi
-       echo "# --- Version Graded:  \"${SUBMISSION_TAG} (${SUBMISSION_HASH})\""
-       echo "# --- Version Date:    \"${SUBMISSION_DATE}\""
+       if [[ -n "${SUBMISSION_HASH}" ]] ; then
+         echo "# --- Version Graded:  \"${SUBMISSION_TAG} (${SUBMISSION_HASH})\""
+         echo "# --- Version Date:    \"${SUBMISSION_DATE}\""
+       fi
        echo "# --- Status:          \"${STATUS}\""
        if [[ -n ${MINUTES_LATE} ]] ; then
          echo "# --- Last Commit late by: $MINUTES_LATE minutes"
@@ -544,16 +548,40 @@ function ag_grade_submission () {
     #######################################################
     ## Special Cases -- to short circuit grading
     ##
-    ## 1. no work was done by the student
-    ##    - ACCEPT_HASH == SUBMISSION_HASH
-    ## 1. no work was done by the student
-    ##    - if Paper Assignment - no Submission file
-    ##    - Submission_File could be: foo.java, etc, 
-    ## 1. effectively no work done by the student
+    ## 1. Student accepted the assignment AFTER the due date
+    ##    I.e., no work was done by the student
+    ##      - $SUBMISSION_HASH = ""
+    ## 1. Student accepted the assignment BEFORE the due date
+    ##    but no additional commits were performed
+    ##    I.e., no work was done by the student
+    ##      - ACCEPT_HASH == SUBMISSION_HASH
+    ## 1. There is no Submission File to be graded
+    ##    I.e., no work was done by the student
+    ##      - if Paper Assignment - no Submission file
+    ##      - Submission_File could be: foo.java, etc, 
+    ## 1. Effectively no work done by the student
     ##    - if Paper Assignment-- Submission file ~=== Assignment File
     ##    - number of commit
 
     #######################################################
+    if [[ -z "${SUBMISSION_HASH}" ]] ; then
+      # student did not accept the assignment prior to the due-date
+      _score=0
+      printf "\t Student accepted the assignment AFTER the due date\n\n"
+      printf "%-20s %3d\t# %s\n" $_student: ${only_accepted} "Student accepted assignment AFTER due date" >>${CLASS_GRADE_REPORT}
+      { 
+        echo "Student accepted the assignment AFTER the due date"
+        echo
+        echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
+        echo
+
+        ag_show_commit_log "${DUE_DATE}"
+      }  >> ${STUDENT_GRADE_REPORT}
+      git checkout main >/dev/null 2>&1
+      return
+    fi
+
+
     if [[ ${ACCEPT_HASH} == ${SUBMISSION_HASH} ]] ; then
       # no work was done by the student.
       _score=0
@@ -564,6 +592,8 @@ function ag_grade_submission () {
         echo
         echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
         echo
+
+        ag_show_commit_log "${DUE_DATE}"
       }  >> ${STUDENT_GRADE_REPORT}
       git checkout main >/dev/null 2>&1
       return
@@ -588,6 +618,9 @@ function ag_grade_submission () {
           echo
           echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
           echo
+
+          ag_show_commit_log "${DUE_DATE}"
+
         }  >> ${STUDENT_GRADE_REPORT}
         git checkout main >/dev/null 2>&1
         return
@@ -605,6 +638,9 @@ function ag_grade_submission () {
           echo
           echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"         # ${_student}"
           echo
+
+          ag_show_commit_log "${DUE_DATE}"
+
         }  >> ${STUDENT_GRADE_REPORT} 
         git checkout main  >/dev/null 2>&1
         return

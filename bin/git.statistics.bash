@@ -134,7 +134,8 @@ STATUS="Submission On Time"
 if (( ${NUM_COMMITS_POST_SUBMISSION} > 0 )) ; then
   STATUS="Post Due Date Commits Ignored"
 fi
-if [[ -z "${SUBMISSION_DATE}" ]] ; then 
+if [[ -z "${SUBMISSION_HASH}" ]] ; then 
+  SUBMISSION_DATE=""
   STATUS="No Submission"
 fi
 
