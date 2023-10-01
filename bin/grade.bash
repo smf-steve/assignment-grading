@@ -460,8 +460,9 @@ function grade_submissions () {
 }
 
 function ag_grade_submission () {
-  not_accepted=-1
-  only_accepted=-1
+  not_accepted=-5
+  only_accepted=-5
+  no_work=-5
   _student=${1}
   _commit_provided=${2:0:2}
   _commit=${2:2}
@@ -568,7 +569,7 @@ function ag_grade_submission () {
       # student did not accept the assignment prior to the due-date
       _score=0
       printf "\t Student accepted the assignment AFTER the due date\n\n"
-      printf "%-20s %3d\t# %s\n" $_student: ${only_accepted} "Student accepted assignment AFTER due date" >>${CLASS_GRADE_REPORT}
+      printf "%-20s %3d\t# %s\n" $_student: ${only_accepted} "Accepted AFTER due date" >>${CLASS_GRADE_REPORT}
       { 
         echo "Student accepted the assignment AFTER the due date"
         echo
@@ -612,7 +613,7 @@ function ag_grade_submission () {
           printf "\nFinal Score $_student: $_score\n\n" ;
         } > $terminal
 
-        printf "%-20s %3d\t# %s\n" $_student: $_score "Missing ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
+        printf "%-20s %3d\t# %s\n" $_student: $_no_work "Missing ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
         { 
           echo "Missing submission file: ${STUDENT_SUBMISSION_FILE}"
           echo
@@ -632,7 +633,7 @@ function ag_grade_submission () {
 
         _score=0
         printf "\t No updates to ${STUDENT_SUBMISSION_FILE}\n"
-        printf "%-20s %3d\t# %s\n" $_student: $_score "No updates to ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
+        printf "%-20s %3d\t# %s\n" $_student: $_no_work "No updates to ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
         { 
           echo "Submission file has not been updated: ${STUDENT_SUBMISSION_FILE}"
           echo
@@ -1094,7 +1095,7 @@ set xrange [0:105]
 set format x ""
 set xtics 1,1
 unset key
-plot [0:80][-5:105] $average, "data_grades" with linespoints
+plot [0:80][-10:105] 0, $average, "data_grades" with linespoints
 EOF
 
 }
