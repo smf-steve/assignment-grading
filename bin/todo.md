@@ -1,4 +1,61 @@
 
+Note in the following... task_3 was not complete.
+   But they completed task_2 ... hence it was fully graded
+   But task_3 -- which did not have a tag by the due date
+      was not partially graded.
+
+   -- based upon the pre_grade routines, perhas
+      -- if a tag is not provided, then use 'git checkout due-date'
+         --- which is git checkout grading_information
+
+   this tag is really the start of a branch.. 
+     consider name change to  tag: Point_of_Grading
+
+
+*  0832e7b  Oct 25 02:05 -0700  (origin/main, origin/HEAD, main)
+*  37809c0  Oct 25 02:04 -0700  (tag: task_3)
+*  be6df82  Oct 25 02:03 -0700 
+*  127859b  Oct 13 00:51 -0700 
+* Due Date: Oct 12 23:59:59  -----------------
+*  b48c7a2  Oct 12 23:32 -0700  (grading_information)
+*  9b7b09c  Oct 12 23:27 -0700 
+*  09b8843  Oct 12 23:24 -0700 
+*  22c9493  Oct 12 23:21 -0700 
+*  8f13d82  Oct 12 23:18 -0700 
+*  24199ed  Oct 12 23:15 -0700 
+*  737ec75  Oct 12 23:12 -0700 
+*  458e0fe  Oct 12 23:07 -0700 
+*  935db1c  Oct 12 22:53 -0700 
+*  f599d1f  Oct 12 22:44 -0700 
+*  60b7919  Oct 12 22:33 -0700 
+*  7797799  Oct 12 22:29 -0700 
+*  7fe7b0d  Oct 12 21:59 -0700 
+*  2b54dca  Oct 12 21:54 -0700 
+*  ffb2dbf  Oct 12 20:58 -0700  (HEAD, tag: task_2)
+*  b9f5784  Oct 12 20:37 -0700 
+*  19356ea  Oct 12 20:34 -0700
+
+
+
+
+---
+done ...
+   commit and pus...
+   
+  exported more variables to that "make"
+  as them defined... when 
+  bash -lc ag_function
+
+---
+
+it appears the the tag for the summision grading is not in place.
+
+need to eliminate my and githubs entrys int the gitlog
+
+regrade should 
+  Not delete the branch, but extend it.
+  reset grading however should delete the branch
+  
 --
 Within github, assign all templates to there id number
   first-assignment  => 01-first assignment
