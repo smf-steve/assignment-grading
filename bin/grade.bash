@@ -56,6 +56,10 @@
 #     - clone_submissions   [ file | account ... ]
 #     - pull_submissions    [ file | account ... ]
 #     - checkout_due_date   [ date ]
+#     - meets_criteria  "command" [ | account ... ]
+#     - pregrade_submissions [--<commit> ] [ file | account ... ]  
+#       - runs the grading process but returns after the special cases have been evaluated
+#       - this effectively removes all of the students who did not "sufficiently" submit anything
 #     - grade_submissions   [--<commit> ] [ file | account ... ]   
 #       - Note: performs its own checkout of version
 #       - Note: use the --<commit> option to override    
@@ -150,23 +154,23 @@ export CLASS_GRADE_REPORT="\${ASSIGNMENT_GRADING_DIR}/grades.\${ASSIGNMENT_NAME}
 ## RELATIVE ENV VARIABLES
 # Student Related Files
 
-STUDENT_ASSIGNMENT_FILE="assignment.md"           # Contained within the student's repo
-STUDENT_SUBMISSION_FILE="submission.md"           # Contained within the student's repo
+export STUDENT_ASSIGNMENT_FILE="assignment.md"           # Contained within the student's repo
+export STUDENT_SUBMISSION_FILE="submission.md"           # Contained within the student's repo
 
-STUDENT_ANSWER_KEY="answers.md"                   # To be added to the student's repo
-STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
+export STUDENT_ANSWER_KEY="answers.md"                   # To be added to the student's repo
+export STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
 
-STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to checkout_date, this file contains the git log before this date
+export STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to checkout_date, this file contains the git log before this date
                                                   # Otherwise the file is empty
 
 ## GRADING RELATED VARIABLES
-SUBMISSION_TAG="graded_version"                   # Tag to identify the version of the repo that is graded
-GRADING_BRANCH="grading_information"
+export SUBMISSION_TAG="graded_version"                   # Tag to identify the version of the repo that is graded
+export GRADING_BRANCH="grading_information"
 
-GRADING_EDITOR="subl"
+export GRADING_EDITOR="subl"
 #GRADING_EDITOR="\${LAUNCH_COMMAND} /Applications/Sublime Text.app"
 
-RESPONSE_TAG='<!-- response -->'
+export RESPONSE_TAG='<!-- response -->'
   # The standardize tag to "grep" for within the student's submission to locate just the responses to review
 
 
@@ -190,27 +194,27 @@ export ASSIGNMENT_ID=\$( sed 's/^\(..\).*$/\1/' <<< \${ASSIGNMENT_NAME})
 
 # Assignment Specific Information
 ########################################################
-RELEASE_DATE_FILE="\${ASSIGNMENT_DIR}/release_date"
-DUE_DATE_FILE="\${ASSIGNMENT_DIR}/due_date"
-TIME_LIMIT_FILE="\${ASSIGNMENT_DIR}/time_limit"
-GRACE_PERIOD_FILE="\${ASSIGNMENT_DIR}/grace_period"
+export RELEASE_DATE_FILE="\${ASSIGNMENT_DIR}/release_date"
+export DUE_DATE_FILE="\${ASSIGNMENT_DIR}/due_date"
+export TIME_LIMIT_FILE="\${ASSIGNMENT_DIR}/time_limit"
+export GRACE_PERIOD_FILE="\${ASSIGNMENT_DIR}/grace_period"
 
-  STUDENT_BASE_URL=\${GITHUB_PREFIX}/\${ASSIGNMENT_NAME}
+  export STUDENT_BASE_URL=\${GITHUB_PREFIX}/\${ASSIGNMENT_NAME}
 
   # Assignment Based Files
-  LOCAL_GRADE_REPORT="\${ASSIGNMENT_DIR}/grades.txt"
-  SUBMISSION_DIR="\${ASSIGNMENT_DIR}/submissions"
+  export LOCAL_GRADE_REPORT="\${ASSIGNMENT_DIR}/grades.txt"
+  export SUBMISSION_DIR="\${ASSIGNMENT_DIR}/submissions"
   
-  KEY_DIR="\${ASSIGNMENT_DIR}/key"
-  KEY_ANSWER_FILE="\${KEY_DIR}/answers.md"        # To be added to the student's repo
-  KEY_RUBRIC_FILE="\${KEY_DIR}/grading_rubric"    
-  KEY_MAKEFILE="\${KEY_DIR}/makefile"
+  export KEY_DIR="\${ASSIGNMENT_DIR}/key"
+  export KEY_ANSWER_FILE="\${KEY_DIR}/answers.md"        # To be added to the student's repo
+  export KEY_RUBRIC_FILE="\${KEY_DIR}/grading_rubric"    
+  export KEY_MAKEFILE="\${KEY_DIR}/makefile"
 
-  ASSIGNMENT_MAKEFILE="\${ASSIGNMENT_DIR}/makefile"     # Should the be such a thing
+  export ASSIGNMENT_MAKEFILE="\${ASSIGNMENT_DIR}/makefile"     # Should the be such a thing
 
-  GRADED_DATE_FILE=\${ASSIGNMENT_DIR}/graded.date
+  export GRADED_DATE_FILE=\${ASSIGNMENT_DIR}/graded.date
 
-  GRADING_LOG=\${ASSIGNMENT_DIR}/grading.log
+  export GRADING_LOG=\${ASSIGNMENT_DIR}/grading.log
 
   # Now Defunct
   # SUBMISSION_ROSTER=\${ASSIGNMENT_DIR}/roster.submissions
@@ -374,7 +378,12 @@ function relative_filename() {
 #   - a grade report is created, with the total points tallied
 #   - summary information is provided  
 
+function pregrade_submissions () {
 
+    PREGRADE="TRUE"
+    grade_submissions "$@"
+    PREGRADE="FALSE"
+}
 
 function regrade_submissions () {
   _grading_count=0
@@ -460,9 +469,9 @@ function grade_submissions () {
 }
 
 function ag_grade_submission () {
-  not_accepted=-5
-  only_accepted=-5
-  no_work=-5
+  _not_accepted=-5
+  _only_accepted=-5
+  _no_work=-5
   _student=${1}
   _commit_provided=${2:0:2}
   _commit=${2:2}
@@ -477,13 +486,14 @@ function ag_grade_submission () {
 
   if [[ ! -d $_dir ]] ; then
     printf "\tStudent did not accept assignment.\n" > $terminal
-    printf "%-20s %3d\t# Did not ACCEPT assignment.\n"  $_student: ${not_accepted} >>${CLASS_GRADE_REPORT}
+    printf "%-20s: %3d\t# Did not ACCEPT assignment.\n"  "${_student}" "${_not_accepted}" >>${CLASS_GRADE_REPORT}
     # Note that multiple lines could appear in the CLASS_GRADE_REPORT for such students
     return
   fi
 
   (
     cd $_dir
+
     git branch ${GRADING_BRANCH} >/dev/null 2>&1
     if (( $? != 0 )) ; then
       printf "\tStudent's repository has already been graded.\n"
@@ -565,11 +575,16 @@ function ag_grade_submission () {
     ##    - number of commit
 
     #######################################################
+
+    # Set the value of when the student accepted the assignment -- 
+    #   -- this value is now added to the grade report for further analysis
+    _accepted="$(date -r ${ACCEPT_TS} '+%Y%m%d%H%M')"
+
     if [[ -z "${SUBMISSION_HASH}" ]] ; then
       # student did not accept the assignment prior to the due-date
       _score=0
       printf "\t Student accepted the assignment AFTER the due date\n\n"
-      printf "%-20s %3d\t# %s\n" $_student: ${only_accepted} "Accepted AFTER due date" >>${CLASS_GRADE_REPORT}
+      printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_only_accepted}" "${_accepted}" "Accepted AFTER due date" >>${CLASS_GRADE_REPORT}
       { 
         echo "Student accepted the assignment AFTER the due date"
         echo
@@ -587,7 +602,7 @@ function ag_grade_submission () {
       # no work was done by the student.
       _score=0
       printf "\t No activity by the student\n\n"
-      printf "%-20s %3d\t# %s\n" $_student: ${only_accepted} "Student only accepted the assignment" >>${CLASS_GRADE_REPORT}
+      printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_only_accepted}" "${_accepted}" "Student only accepted the assignment" >>${CLASS_GRADE_REPORT}
       { 
         echo "Student only accepted the assignment."
         echo
@@ -613,7 +628,7 @@ function ag_grade_submission () {
           printf "\nFinal Score $_student: $_score\n\n" ;
         } > $terminal
 
-        printf "%-20s %3d\t# %s\n" $_student: $_no_work "Missing ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
+        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_no_work}" "${_accepted}" "Missing ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
         { 
           echo "Missing submission file: ${STUDENT_SUBMISSION_FILE}"
           echo
@@ -633,7 +648,7 @@ function ag_grade_submission () {
 
         _score=0
         printf "\t No updates to ${STUDENT_SUBMISSION_FILE}\n"
-        printf "%-20s %3d\t# %s\n" $_student: $_no_work "No updates to ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
+        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_no_work}" "${_accepted}" "No updates to ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
         { 
           echo "Submission file has not been updated: ${STUDENT_SUBMISSION_FILE}"
           echo
@@ -653,6 +668,10 @@ function ag_grade_submission () {
     # Note there is a return in the code block above.
     # Hence, flow might not get here
 
+    if [[ ${PREGRADE} == "TRUE" ]]; then 
+      reset_grading "$_student"
+      return
+    fi
 
     # Determine which MAKEFILE to use
     MAKE_FILE=${KEY_MAKEFILE}
@@ -679,7 +698,7 @@ function ag_grade_submission () {
     # Add the grade.report epilogue
     {
       echo "----"
-      printf " %3d Points:  Total\n" $_score
+      printf " %3d Points:  Total\n" ${_score}
       echo
       echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
       echo
@@ -691,11 +710,12 @@ function ag_grade_submission () {
 
     # Print out final score
     { 
-      printf "\nFinal Score $_student: $_score\n\n" ;
+      printf "\nFinal Score ${_student}: ${_score}\n\n" ;
     } > $terminal
 
+
     {
-      printf "%-20s %3d\t#" $_student: $_score
+      printf "%-20s: %3d\t# %s" ${_student} ${_score} ${_accepted}
       if [[ -z ${MINUTES_LATE} ]] ; then
         printf "\n" 
       else 
@@ -764,6 +784,7 @@ function ag_clone_submission () {
       echo "Did Not Accept Assignment: ${_student}"
     fi
   fi
+  [[ -n ${ON_CAMPUS} ]] && sleep 2
 }
 function clone_submissions () {
 
@@ -979,6 +1000,29 @@ function ag_checkout_date () {
 }
 
 
+# criteria must resolve to True==0, or not True
+function meets_criteria  () {
+  criteria="$1"
+  shift
+
+  assert_class_roster || return $?
+
+  for _student in $(input_list "$@") ; do
+    _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
+    if [[ -d "$_dir" ]] ; then 
+      (
+        cd ${_dir}
+        eval "$criteria"  >/dev/null 2>&1
+        if [[ $? ==  0 ]] ; then
+          echo ${_student}
+        fi
+      ) 
+    fi 
+  done 
+} 
+
+
+
 ## Following is now defunct due to timeline due.date information
 function checkout_due_date () {
   _date=${1}
@@ -1074,17 +1118,30 @@ function cat_nocomments () {
 }
 
 function average () {
+  local sum=0 count=0
   while read _score ; do 
-     (( count++ ))
-     (( sum+= _score ))
+    if (( _score > 0 )) ; then 
+      (( count++ ))
+      (( sum+= _score ))
+    fi
   done < data_grades
   echo $(( sum / count  ))
 }
 
+function create_data_grades () {
+    cat grades.txt | sed -e 's/ *#.*$//' -e '/^ *$/d' | awk -F: '{ print $2}' | sort -n >data_grades
+}
+
+function create_accept_grades () {
+
+  cat grades.txt | sed -e '/^$/d' -e '/^#/d' -e '/Did not ACCEPT/d' -e 's/^.*://' |\
+    awk '{ print $3, $1}' | sort -n >accept_grades
+}
+
 function plot_grades () {
 
-  cat grades.txt | grep -v "^#" | awk '{ print $2}' | sort -n >data_grades
-  average=$(average)
+  create_data_grades
+  local average=$(average <data_grades)
 gnuplot <<EOF
 set term png
 set output "${ASSIGNMENT_NAME}-scores.png"
@@ -1094,8 +1151,35 @@ set ylabel "Assigned Grade"
 set xrange [0:105]
 set format x ""
 set xtics 1,1
-unset key
-plot [0:80][-10:105] 0, $average, "data_grades" with linespoints
+set key fixed left top
+set key outside right top title "Legend"
+plot [0:80][-10:105] 0 notitle, ${average} title "average (>0)", "data_grades" with linespoints title "score"
 EOF
+
+}
+
+function plot_grades_accept () {
+
+  create_data_grades
+  create_accept_grades
+
+  local due_date=$(date -j -f '%b %d %T' "${DUE_DATE}" '+%Y%m%d%H%M')
+  local average=$(average <data_grades)
+
+gnuplot <<EOF
+set term png
+set output "${ASSIGNMENT_NAME}-scores_by_accept.png"
+set title "Scores: ${ASSIGNMENT_NAME}"
+set xlabel "Individual Student Submission"
+set ylabel "Assigned Grade"
+set xrange [0:105]
+set format x ""
+set xtics 1,1
+set key fixed left top
+set key outside right top title "Legend"
+set arrow from ${due_date}, 0  to ${due_date}, 90 nohead
+plot [0:80][-10:105] 0 notitle, ${average} title "average", "accept_grades" with linespoints title "score"
+EOF
+
 
 }
