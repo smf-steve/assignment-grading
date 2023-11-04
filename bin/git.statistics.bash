@@ -164,7 +164,7 @@ fi
 
 ACEPT_HASH="${ACCEPT_INFO[0]}"
 ACCEPT_TS="${ACCEPT_INFO[1]}"
-ACCEPT_DATE="$(date -r ${ACCEPT_INFO[1]} '+%b %d %T')"
+ACCEPT_DATE="$(date -r ${ACCEPT_TS} '+%b %d %T')"
 
 
 #cat > ${STUDENT_STAT_REPORT} <<EOF
