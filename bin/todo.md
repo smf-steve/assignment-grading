@@ -1,3 +1,31 @@
+For regrades for programming assignments
+
+
+subl checksum.j
+subl grade.report
+git checkout task_3
+error: The following untracked working tree files would be overwritten by checkout:
+  grade.report
+Please move or remove them before you switch branches.
+Aborting
+make: *** [grade_task_3] Error 1
+Structure of Java
+
+need to remove the old grade.report.
+but this needs to be done for an tag that was moved after the point in time in which the grade.report was created.
+
+nop.. I think I need to track the changes.
+
+I need to make the grade.report not track about and then move it into place at the end.
+
+    mv grade.report.temp grade.report
+    git commit -m report    # only do this in the main
+
+
+export STUDENT_GRADE_REPORT="grade.report.regrade"               # To be added to the student's repo
+
+---
+
 
 Note in the following... task_3 was not complete.
    But they completed task_2 ... hence it was fully graded
