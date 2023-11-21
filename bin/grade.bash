@@ -158,6 +158,7 @@ export STUDENT_ASSIGNMENT_FILE="assignment.md"           # Contained within the 
 export STUDENT_SUBMISSION_FILE="submission.md"           # Contained within the student's repo
 
 export STUDENT_ANSWER_KEY="answers.md"                   # To be added to the student's repo
+export STUDENT_GRADE_REPORT_TMP="grade.report.tmp"           
 export STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
 
 export STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to checkout_date, this file contains the git log before this date
@@ -528,7 +529,7 @@ function ag_grade_submission () {
     _score=0
 
      # Grade Report Prologue
-    rm -f ${STUDENT_GRADE_REPORT}
+    rm -f ${STUDENT_GRADE_REPORT_TMP}
     { 
        echo "# Grading Report"
        echo "# Github Account: ${_student}"
@@ -550,7 +551,7 @@ function ag_grade_submission () {
          echo "# --- Last Commit late by: $MINUTES_LATE minutes"
        fi 
        echo
-    } > ${STUDENT_GRADE_REPORT}
+    } > ${STUDENT_GRADE_REPORT_TMP}
 
 
 
@@ -592,7 +593,7 @@ function ag_grade_submission () {
         echo
 
         ag_show_commit_log "${DUE_DATE}"
-      }  >> ${STUDENT_GRADE_REPORT}
+      }  >> ${STUDENT_GRADE_REPORT_TMP}
       git checkout main >/dev/null 2>&1
       return
     fi
@@ -610,7 +611,7 @@ function ag_grade_submission () {
         echo
 
         ag_show_commit_log "${DUE_DATE}"
-      }  >> ${STUDENT_GRADE_REPORT}
+      }  >> ${STUDENT_GRADE_REPORT_TMP}
       git checkout main >/dev/null 2>&1
       return
     fi
@@ -637,7 +638,7 @@ function ag_grade_submission () {
 
           ag_show_commit_log "${DUE_DATE}"
 
-        }  >> ${STUDENT_GRADE_REPORT}
+        }  >> ${STUDENT_GRADE_REPORT_TMP}
         git checkout main >/dev/null 2>&1
         return
       fi
@@ -657,7 +658,7 @@ function ag_grade_submission () {
 
           ag_show_commit_log "${DUE_DATE}"
 
-        }  >> ${STUDENT_GRADE_REPORT} 
+        }  >> ${STUDENT_GRADE_REPORT_TMP} 
         git checkout main  >/dev/null 2>&1
         return
       fi
@@ -692,7 +693,7 @@ function ag_grade_submission () {
           printf "  %2d Points:  $_line: $_comment\n" $_value
           (( _score += _value ))
         fi
-      done < ${KEY_RUBRIC_FILE} >> ${STUDENT_GRADE_REPORT}
+      done < ${KEY_RUBRIC_FILE} >> ${STUDENT_GRADE_REPORT_TMP}
     }
 
     # Add the grade.report epilogue
@@ -705,7 +706,7 @@ function ag_grade_submission () {
 
       ag_show_commit_log "${DUE_DATE}"
 
-    } >> ${STUDENT_GRADE_REPORT}
+    } >> ${STUDENT_GRADE_REPORT_TMP}
 
 
     # Print out final score
@@ -784,7 +785,7 @@ function ag_clone_submission () {
       echo "Did Not Accept Assignment: ${_student}"
     fi
   fi
-  [[ -n ${ON_CAMPUS} ]] && sleep 2
+  [[ -n ${ON_CAMPUS} ]] && sleep 4
 }
 function clone_submissions () {
 
@@ -809,6 +810,7 @@ function ag_pull_submission () {
        cd "${_dir}"
        git checkout main >/dev/null 2>&1
        git pull --no-edit
+       git pull --force --tags
        if [ $? == 0 ] ; then
          echo "Pulled: ${_student}" 
        else
@@ -831,6 +833,7 @@ function pull_submissions () {
 }  
 
 function commit_grade () {
+  set -x
   _student=${1}
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}
 
@@ -843,6 +846,7 @@ function commit_grade () {
         git add ${STUDENT_ANSWER_KEY}
         git commit -m 'Added Answers File' ${STUDENT_ANSWER_KEY}
       fi
+      mv ${STUDENT_GRADE_REPORT_TMP} ${STUDENT_GRADE_REPORT}
       git add ${STUDENT_GRADE_REPORT}
       git commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT} 
       git checkout main >/dev/null 2>&1
