@@ -70,5 +70,14 @@ GITHUB_CLASS=
    1. Integerate github account names, and sort by...
    1. Validate all grades.\*.txt have no duplicates (from individual regrades)
    1. Run `grades_log2cvs` on all grades.\*.txt
-   1. Update spreadsheet to includ grades.\*.cvs files
+   1. Update spreadsheet to include grades.\*.cvs files
+
+define {CLASS_ROSTER}
+
+copy all grades.\*.txt file to a temp directory
+ls grades.\*.txt | all_grades2csv 
+ls grades.\*.csv | generate_excel_cells
+open \*.csv \<GRADING SPREAD_SHEET>.xlxs
+copy the excel cell into the the appropriate places
+
 
