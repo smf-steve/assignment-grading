@@ -164,7 +164,7 @@ export STUDENT_GRADE_REPORT_TMP="grade.report.tmp"
 export STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
 
 export STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to checkout_date, this file contains the git log before this date
-                                                  # Otherwise the file is empty
+                                                         # Otherwise the file is empty
 
 ## GRADING RELATED VARIABLES
 export SUBMISSION_TAG="graded_version"                   # Tag to identify the version of the repo that is graded
@@ -209,7 +209,8 @@ export GRACE_PERIOD_FILE="\${ASSIGNMENT_DIR}/grace_period"
   export SUBMISSION_DIR="\${ASSIGNMENT_DIR}/submissions"
   
   export KEY_DIR="\${ASSIGNMENT_DIR}/key"
-  export KEY_ANSWER_FILE="\${KEY_DIR}/answers.md"        # To be added to the student's repo
+  export KEY_ASSIGNMENT_FILE="\${KEY_DIR}/assignment.md"      # If present, it is a paper assignment
+  export KEY_ANSWER_FILE="\${KEY_DIR}/answers.md"             # To be added to the student's repo
   export KEY_RUBRIC_FILE="\${KEY_DIR}/grading_rubric"    
   export KEY_MAKEFILE="\${KEY_DIR}/makefile"
 
@@ -218,10 +219,6 @@ export GRACE_PERIOD_FILE="\${ASSIGNMENT_DIR}/grace_period"
   export GRADED_DATE_FILE=\${ASSIGNMENT_DIR}/graded.date
 
   export GRADING_LOG=\${ASSIGNMENT_DIR}/grading.log
-
-  # Now Defunct
-  # SUBMISSION_ROSTER=\${ASSIGNMENT_DIR}/roster.submissions
-  # NON_SUBMISSION_ROSTER=\${ASSIGNMENT_DIR}/roster.non_submissions
 
 EOF
 
@@ -621,13 +618,9 @@ function ag_grade_submission () {
       return
     fi
 
-    if [[  -f ${STUDENT_ASSIGNMENT_FILE} ]] ; then
-      # This is a paper submission, 
-      # Note that if a student creates the assignment.md file -- JUST because
-      #   and this is NOT a paper submission -- this breaks.
+    if [[  -f ${KEY_ASSIGNMENT_FILE} ]] ; then             # This is a PAPER Assignment
 
-      if [[ ! -f ${STUDENT_SUBMISSION_FILE} ]] ; then
-        # Nothing Submitted
+      if [[ ! -f ${STUDENT_SUBMISSION_FILE} ]] ; then      # Nothing Submitted
         _score=${_no_work}
         { 
           printf "\t Missing submission file\n\n"
@@ -641,7 +634,7 @@ function ag_grade_submission () {
           echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\"        # ${_student}"
           echo
 
-          ag_show_commit_log "${DUE_DATE}"
+          ag_show_commit_log "${DUE_DATE}" ${STUDENT_SUBMISSION_FILE}
 
         }  >> ${STUDENT_GRADE_REPORT_TMP}
         git checkout main >/dev/null 2>&1
@@ -661,14 +654,14 @@ function ag_grade_submission () {
           echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\"         # ${_student}"
           echo
 
-          ag_show_commit_log "${DUE_DATE}" 
+          ag_show_commit_log "${DUE_DATE}" ${STUDENT_SUBMISSION_FILE}
 
         }  >> ${STUDENT_GRADE_REPORT_TMP} 
         git checkout main  >/dev/null 2>&1
         return
       fi
       #######################################################
-      ## Special Cases
+      ## Special Cases Complete
       #######################################################
     fi
     # Note there is a return in the code block above.
@@ -1113,6 +1106,8 @@ function apply_all () {
 
 function ag_show_commit_log () {
   DUE_DATE="$1"
+  shift
+  FILE_LIST="$@"
 
   if [[ -z "$DUE_DATE" ]] ; then
     DUE_DATE="$(date '+%b %d %T')"
@@ -1121,7 +1116,7 @@ function ag_show_commit_log () {
   echo "STUDENT COMMIT HISTORY:"
   echo
   git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
-          --graph  --after "${DUE_DATE}" origin/main $(git tag) -- |
+          --graph  --after  "${DUE_DATE}" origin/main $(git tag) -- ${FILE_LIST} ':!README.md' |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
 
   if [[ -z ${DUE_DATE} ]] ; then
@@ -1130,7 +1125,7 @@ function ag_show_commit_log () {
     echo "* Due Date: ${DUE_DATE}  -----------------"
   fi
   git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
-          --graph  --before "${DUE_DATE}" origin/main $(git tag) -- |
+          --graph  --before "${DUE_DATE}" origin/main $(git tag) -- ${FILE_LIST} ':!README.md' |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
   echo
 
