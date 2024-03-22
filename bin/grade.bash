@@ -345,7 +345,7 @@ function grade_start () {
   [[ -s "${RELEASE_DATE_FILE}" ]] && RELEASE_DATE="$(cat_nocomments RELEASE_DATE_FILE})"
   [[ -s "${DUE_DATE_FILE}" ]]     && DUE_DATE="$(cat_nocomments ${DUE_DATE_FILE})"
   [[ -s "${GRACE_PERIOD_FILE}" ]] && GRACE_PERIOD="$(cat_nocomments ${GRACE_PERIOD_FILE})" 
-  [[ -s "${TIME_LIMIT_FILE}" ]]   && TIME_LIMIT_FILE="$(cat_nocomments ${TIME_LIMIT_FILE})" 
+  [[ -s "${TIME_LIMIT_FILE}" ]]   && TIME_LIMIT="$(cat_nocomments ${TIME_LIMIT_FILE})" 
 
   echo "Starting the grading for:" ${ASSIGNMENT_NAME}
   [[ -n ${RELEASE_DATE} ]] && echo "Release Date: ${RELEASE_DATE}"
