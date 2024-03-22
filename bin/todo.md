@@ -1,3 +1,113 @@
+Grading process
+
+Add in a check to validate that there is a \n
+  at the end of a file
+
+  hexdump -v -e '1/1 "02%x\n"'  ~/repositories/assignment-grading/bin/todo.md  | tail -1
+if the output is NOT an "0a" then error...
+
+
+pregrade_submissions
+make -f $KEY_DIR/makefile pregrade
+
+--
+tag: graded_version,
+does not make sense, when grading based upon code.
+
+-- 
+double check the assignment of negative values...
+  -- they should appear inthe .txt files
+  -- they should be convert to 0 in the .csv files
+
+double check whether or not the .txt files
+  include ALL students in the grade report..
+  e.g., Victor in 44.nextInt does not
+  
+--
+add time on tasks for timed activities
+for example some students only use 1 hour for a 2 hour quiz
+--
+
+put in a check for the makefile
+
+
+Restructure the use of the makefile 
+
+1. if MAKEFILE is set, use it
+1. elif KEY_MAKEFILE exist, use it
+1. elif ASSIGMENT_MAKEFILE
+1. elsif CLASS_MAKEFILE
+   - the class_makefile does not exist
+   - it would only do paper submissions
+
+ # Determine which MAKEFILE to use
+    ## Should this be print to $terminal?
+    MAKEFILE=${KEY_MAKEFILE}
+    [[ ! -f ${MAKEFILE} ]] && MAKEFILE=${ASSIGNMENT_MAKEFILE}
+    [[ ! -s ${MAKEFILE} ]] && MAKEFILE=${CLASS_MAKEFILE}
+    
+    export MAKEFILE
+    make -k -f ${MAKEFILE} grade
+
+
+
+
+
++ MAKE_FILE=/Users/steve/classes/comp122/assignment-grading/20-exam-formats-tuesday/key/makefile
++ [[ ! -f /Users/steve/classes/comp122/assignment-grading/20-exam-formats-tuesday/key/makefile ]]
++ MAKE_FILE=/Users/steve/classes/comp122/assignment-grading/20-exam-formats-tuesday/makefile
++ [[ ! -s /Users/steve/classes/comp122/assignment-grading/20-exam-formats-tuesday/makefile ]]
++ MAKE_FILE=/Users/steve/classes/comp122/assignment-grading/makefile
++ export MAKE_FILE
++ make -f /Users/steve/classes/comp122/assignment-grading/makefile grade
+make: /Users/steve/classes/comp122/assignment-grading/makefile: No such file or directory
+make: *** No rule to make target `/Us
+
+This should also be moved to the top.. not for each student...
+--
+double check the changes made to add a empty directory
+
+
+--
+$ clone_submissions test_rester
+Did Not Accept Assignment: test_rester
+
+
+
+Need to assert type of grading
+  -- paper like, i.e. look for submission.md
+  -- programming, i.e., run the makefile
+
+Does doing a  `make grade` solve this
+  - i.e., move the process to grade in paper-grade
+  - make -f ${MAKE_FILE} grade 
+  - special cases need to be codify within the makefile.
+
+
+--
+for paper assignments.
+do a git log on just submission.md
+  - then I don't get info about my updates to README or whatever.
+
+--
+Banner does not show time_limit
+
+grading:40- 20-exam-formats-monday)$ grade_start
+Starting the grading for: 20-exam-formats-monday
+Release Date: Not Defined
+Due Date: Nov 20 10:25:00
+Grace Period: 5M
+Warning: Rubric File Not Found: "20-exam-formats-monday/key/grading_rubric"
+(grading:20- 20-exam-formats-monday)$ ls
+assignment.env  grace_period  key/    release_date  time_limit
+due_date  grades.txt  makefile  submissions/
+(grading:20- 20-exam-formats-monday)$ more time_limit 
+1H15M
+(grading:20- 20-exam-formats-monday)$ 
+
+
+
+---
 For regrades for programming assignments
 
 
@@ -25,7 +135,10 @@ I need to make the grade.report not track about and then move it into place at t
 export STUDENT_GRADE_REPORT="grade.report.regrade"               # To be added to the student's repo
 
 ---
+need a way to mark in the log files important dates
+  - due dates is only one of them
 
+---
 
 Note in the following... task_3 was not complete.
    But they completed task_2 ... hence it was fully graded
@@ -103,12 +216,21 @@ change name of directory from
 presume there is a defualt class file
 presume that file is put in to the right location with being described via the instructions
 
+--
+cleanup the 
+
+if [[ $\_dir/did_not_accept ]] ; then
+
   -- 
   get rid of the notaion of the release date...or starte adding it.
 
 # Todo List:
 
 ## Documentation:
+  - ADD info of:
+    * PREGRADE: TRUE | FALSE
+    * GRADE:  make tag
+    * ON_CAMPUS:  -z | -n
   - Diagram of the process to perform grading
   - An API list (If you will) of all functions and what they do
   - Refine Process.md as appropriate
