@@ -159,6 +159,7 @@ export STUDENT_SUBMISSION_FILE="submission.md"           # Contained within the 
 
 export DID_NOT_ACCEPT_FILE="DID_NOT_ACCEPT_ASSIGNMENT"
 export STUDENT_ANSWER_KEY="answers.md"                   # To be added to the student's repo
+
 export STUDENT_GRADE_REPORT_TMP="grade.report.tmp"           
 export STUDENT_GRADE_REPORT="grade.report"               # To be added to the student's repo
 
@@ -516,7 +517,7 @@ function ag_grade_submission () {
       : # Use the current checkout version
     else
       # Set the _commit to be the SUBMISSION_HASH, if a _commit was not provided
-      [[ -n "${_commit}" ]] && _commit=${SUBMISSION_HASH}
+      [[ -z "${_commit}" ]] && _commit=${SUBMISSION_HASH}
     fi
 
     if [[ -n "${_commit}" ]] ; then 
@@ -693,12 +694,12 @@ function ag_grade_submission () {
 
     # Determine which MAKEFILE to use
     ## Should this be print to $terminal?
-    MAKE_FILE=${KEY_MAKEFILE}
-    [[ ! -f ${MAKE_FILE} ]] && MAKE_FILE=${ASSIGNMENT_MAKEFILE}
-    [[ ! -s ${MAKE_FILE} ]] && MAKE_FILE=${CLASS_MAKEFILE}
+    MAKEFILE=${KEY_MAKEFILE}
+    [[ ! -f ${MAKEFILE} ]] && MAKEFILE=${ASSIGNMENT_MAKEFILE}
+    [[ ! -s ${MAKEFILE} ]] && MAKEFILE=${CLASS_MAKEFILE}
     
-    export MAKE_FILE
-    make -f ${MAKE_FILE} grade
+    export MAKEFILE
+    make -k -f ${MAKEFILE} grade
     
 
     echo "Grading $_student" > $terminal
@@ -857,7 +858,8 @@ function commit_grade () {
   _student=${1}
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}
 
-  if [[ -d "${_dir}" ]] ; then
+  if [[ -d "${_dir}"/.git ]] ; then
+     # if there is no .git directory, then nothing to commit
     ( 
       cd ${_dir} 
       git checkout ${GRADING_BRANCH} >/dev/null 2>&1
@@ -940,7 +942,7 @@ function grade_join () {
   while read _student ; do 
     grep $_student $_grades
     if [[ $? != 0 ]] ; then
-      echo "$_student, -1, #no grade"
+      echo "$_student, 0, # no grade"
     fi
   done < $_roster
 }
@@ -949,16 +951,20 @@ function grade_join () {
 #  - it will remove anyone who has dropped
 #  - it will add appropriate zero scores to folks that skipped an assignment
 # Process a grade.*.log file
-# removing comment lines
-# removing blank lines
-# removing tabs
-# convert  "student: grade" --> "student, grade"
+# removes comment lines
+# removes blank lines
+# removes tabs
+# replace all negative scores with zero (0)
+# replace : and # with a , (for csv)
+# remove superflous what space before the ,
 # sort in case insensitive the resulting file
 # if no dups, then join with class roster to ensure all have a recorded grade.
 function grades2csv () {
    _file="$1"
    _base=$(basename -s .txt $_file )
-   sed -e  '/^#/d' -e '/^ *$/d' -e 's/\t//g' -e 's/:/,/g' -e 's/#/, #/' $_file |\
+   sed   -e '/^#/d' -e '/^ *$/d' -e 's/\t//g' \
+         -e 's/: *-[0-9]*/: 0/' \
+         -e 's/:/,/g' -e 's/#/, #/' -e 's/ *,/,/g' $_file |\
      sort -u -f  > $_base.prep
    awk '{ print $1}' $_base.prep | sort -u -f --check=quiet >/dev/null
    if [[ $? != 0 ]] ; then
@@ -966,7 +972,12 @@ function grades2csv () {
    else
      #  The "join" utility seems to be broken on MacOS
      #  The "join" on RedHat does not allow hyphens in the key 
-     grade_join ${CLASS_ROSTER} $_base.prep >$_base.csv
+     if [[ -z ${CLASS_ROSTER} ]] ; then
+       echo "class roster undefined -- run grade_start"
+       return 1
+     fi
+
+     grade_join ${CLASS_ROSTER} $_base.prep | sort -f >$_base.csv
    fi
    rm $_base.prep
 }
@@ -1110,7 +1121,7 @@ function ag_show_commit_log () {
   echo "STUDENT COMMIT HISTORY:"
   echo
   git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
-          --graph  --after "${DUE_DATE}" origin/main $(git tag) |
+          --graph  --after "${DUE_DATE}" origin/main $(git tag) -- |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
 
   if [[ -z ${DUE_DATE} ]] ; then
@@ -1119,7 +1130,7 @@ function ag_show_commit_log () {
     echo "* Due Date: ${DUE_DATE}  -----------------"
   fi
   git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
-          --graph  --before "${DUE_DATE}" origin/main $(git tag) |
+          --graph  --before "${DUE_DATE}" origin/main $(git tag) -- |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
   echo
 
