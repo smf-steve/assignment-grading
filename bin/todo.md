@@ -139,20 +139,7 @@ regrade should
   Not delete the branch, but extend it.
   reset grading however should delete the branch
   
---
-Within github, assign all templates to there id number
-  first-assignment  => 01-first assignment
 
-Update the code to reflect this... it might be the case already
-
----
-update the system to ignore comments in 
-  timelimit and graceperiod
-  add the default settings if you will to these filfes
-
---
-change name of directory from 
-   key --> template
 
 -- 
 presume there is a defualt class file

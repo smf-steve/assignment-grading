@@ -309,10 +309,16 @@ function create_assignment () {
   mkdir ${SUBMISSION_DIR}
   touch ${LOCAL_GRADE_REPORT}
   ln    ${LOCAL_GRADE_REPORT} ${CLASS_GRADE_REPORT}
-  touch ${RELEASE_DATE_FILE}
-  touch ${DUE_DATE_FILE}
-  touch ${TIME_LIMIT_FILE}
-  touch ${GRACE_PERIOD_FILE}
+  date +"# %b %d %H:%M:%S"  > ${RELEASE_DATE_FILE}
+  date +"# %b %d %H:%M:%S"  > ${DUE_DATE_FILE}
+  cat > ${TIME_LIMIT_FILE} <<EOF
+    # 75M
+    # 1H15M
+EOF
+
+  cat > ${GRACE_PERIOD_FILE} <<EOF
+    # 5M
+EOF
 }
 
 
@@ -349,7 +355,7 @@ function grade_start () {
   export DUE_DATE="Not Defined"
   export TIME_LIMIT=
   export GRACE_PERIOD=
-  [[ -s "${RELEASE_DATE_FILE}" ]] && RELEASE_DATE="$(cat_nocomments RELEASE_DATE_FILE})"
+  [[ -s "${RELEASE_DATE_FILE}" ]] && RELEASE_DATE="$(cat_nocomments ${RELEASE_DATE_FILE})"
   [[ -s "${DUE_DATE_FILE}" ]]     && DUE_DATE="$(cat_nocomments ${DUE_DATE_FILE})"
   [[ -s "${GRACE_PERIOD_FILE}" ]] && GRACE_PERIOD="$(cat_nocomments ${GRACE_PERIOD_FILE})" 
   [[ -s "${TIME_LIMIT_FILE}" ]]   && TIME_LIMIT="$(cat_nocomments ${TIME_LIMIT_FILE})" 
@@ -496,7 +502,8 @@ function ag_grade_submission () {
 
   if [[ ! -d $_dir ]] ; then
     printf "\tStudent did not accept assignment.\n" > $terminal
-    printf "%-20s: %3d\t# Did not ACCEPT assignment.\n"  "${_student}" "${_not_accepted}" >>${CLASS_GRADE_REPORT}
+    printf "%-20s: %3d\t# Did not ACCEPT assignment.\n"  \
+           "${_student}" "${_not_accepted}" >>${CLASS_GRADE_REPORT}
     mkdir $_dir
     touch $_dir/${DID_NOT_ACCEPT_FILE}
     return
