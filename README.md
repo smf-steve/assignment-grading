@@ -76,4 +76,7 @@ To faciliate the grading process, a single directory (per class) is created.  As
       * `submissions/`: a directory to store each of the student's submissions 
 
 
+---
+## Known Limitations and Bugs
 
+   * A class is held within a calendar year (dates don't include the year)
