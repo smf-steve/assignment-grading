@@ -485,7 +485,8 @@ function ag_grade_submission () {
   _commit_provided=${2:0:2}
   _commit=${2:2}
 
-  source ${ASSIGNMENT_ENV}
+  # source ${ASSIGNMENT_ENV}   # Not needed anymore becasue of the grade-start process
+
   _dir="${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}"
 
   echo "--------------" > $terminal
