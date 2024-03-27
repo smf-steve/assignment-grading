@@ -214,8 +214,6 @@ export GRACE_PERIOD_FILE="\${ASSIGNMENT_DIR}/grace_period"
   export KEY_RUBRIC_FILE="\${KEY_DIR}/grading_rubric"    
   export KEY_MAKEFILE="\${KEY_DIR}/makefile"
 
-  export ASSIGNMENT_MAKEFILE="\${ASSIGNMENT_DIR}/makefile"     # Should the be such a thing
-
   export GRADED_DATE_FILE=\${ASSIGNMENT_DIR}/graded.date
 
   export GRADING_LOG=\${ASSIGNMENT_DIR}/grading.log
@@ -315,7 +313,6 @@ function create_assignment () {
   touch ${DUE_DATE_FILE}
   touch ${TIME_LIMIT_FILE}
   touch ${GRACE_PERIOD_FILE}
-  touch ${ASSIGNMENT_MAKEFILE}
 }
 
 
@@ -330,8 +327,21 @@ function grade_start () {
   fi
   source ${ASSIGNMENT_ENV}
   PS1="(grading:$ASSIGNMENT_ID- \W)$ "
-
   terminal=$(tty)
+
+  # Check for grading roster
+  assert_class_roster || return $?
+
+  # Determine which MAKEFILE to use for this ASSIGNMENT
+  # 1. Honor the MAKEFILE env variable
+  # 2. Make CLASS_MAKEFILE the default
+  # 3. Use KEY_MAKEFILE if it exists
+
+  GRADING_MAKEFILE=${MAKEFILE}
+  if [[ -z "${GRADING_MAKEFILE}" ]] ; then 
+     GRADING_MAKEFILE="${CLASS_MAKEFILE}"
+     [[ -f "${KEY_MAKEFILE}" ]] && GRADING_MAKEFILE="${KEY_MAKEFILE}"
+  fi 
 
   # Rerun these commands, in case of any updates after the initial `grade_start` is executed
   export RELEASE_DATE="Not Defined"
@@ -345,20 +355,19 @@ function grade_start () {
   [[ -s "${TIME_LIMIT_FILE}" ]]   && TIME_LIMIT="$(cat_nocomments ${TIME_LIMIT_FILE})" 
 
   echo "Starting the grading for:" ${ASSIGNMENT_NAME}
-  [[ -n ${RELEASE_DATE} ]] && echo "Release Date: ${RELEASE_DATE}"
-  [[ -n ${DUE_DATE} ]]     && echo "Due Date: ${DUE_DATE}"
-  [[ -n ${TIME_LIMIT} ]]   && echo "Time Limit: ${TIME_LIMIT}"
-  [[ -n ${GRACE_PERIOD} ]] && echo "Grace Period: ${GRACE_PERIOD}"
+  [[ -n "${RELEASE_DATE}" ]]      && echo "Release Date: ${RELEASE_DATE}"
+  [[ -n "${DUE_DATE}" ]]          && echo "Due Date:     ${DUE_DATE}"
+  [[ -n "${TIME_LIMIT}" ]]        && echo "Time Limit:   ${TIME_LIMIT}"
+  [[ -n "${GRACE_PERIOD}" ]]      && echo "Grace Period: ${GRACE_PERIOD}"
+  [[ -n "${GRADING_MAKEFILE}" ]]  && echo "Makefile:     $(relative_filename ${GRADING_MAKEFILE})" 
+  [[ -f "${KEY_RUBRIC_FILE}" ]]   && echo "Rubric:       $(relative_filename ${KEY_RUBRIC_FILE})" 
 
   # Check for key files
   [[ ! -f ${KEY_RUBRIC_FILE} ]] && {
      _l=$(relative_filename "${KEY_RUBRIC_FILE}" )
+     echo
      echo "Warning: Rubric File Not Found: \"${_l}\"" ;  
   }
-  # Check for grading roster
-  assert_class_roster || return $?
-
-
   _grading_count=0
 
 }
@@ -684,18 +693,11 @@ function ag_grade_submission () {
       echo
     } > $terminal
 
-
-    # Determine which MAKEFILE to use
-    ## Should this be print to $terminal?
-    MAKEFILE=${KEY_MAKEFILE}
-    [[ ! -f ${MAKEFILE} ]] && MAKEFILE=${ASSIGNMENT_MAKEFILE}
-    [[ ! -s ${MAKEFILE} ]] && MAKEFILE=${CLASS_MAKEFILE}
-    
-    export MAKEFILE
-    make -k -f ${MAKEFILE} grade
+    echo ${GRADING_MAKEFILE}
+    MAKEFILE=${GRADING_MAKEFILE} make -k -f ${GRADING_MAKEFILE} grade
     
 
-    echo "Grading $_student" > $terminal
+    echo "Grading $_student"  > $terminal
     # Prompt the Professor for items related to the rubric
     {
       # For each line in the rubric
