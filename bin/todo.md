@@ -1,6 +1,26 @@
-Grading process
+# ToDo:  Assignment Grading
+
+## Potential New Features:
+1. add time on task for time activities
+   - Release date
+   - Due Date
+   - Accept date
+   - Final Commit 
+   - Time on Task: Final - Accept
+   - Available Time:  Release - Due Date
+   * need to standardize Release time.
+   * Add to the ag_log each of the final dates
 
 
+## Assignment Preparation
+1. Place into Student Directory
+   - Due Date
+   - Release Date
+1. Within github, assign all templates to there id number
+   first-assignment  => 01-first assignment
+
+
+## Pregrade stuff
 pregrade_submissions
 make -f $KEY_DIR/makefile pregrade
 
@@ -8,20 +28,16 @@ make -f $KEY_DIR/makefile pregrade
 tag: graded_version,
 does not make sense, when grading based upon code.
 
--- 
-double check the assignment of negative values...
-  -- they should appear inthe .txt files
-  -- they should be convert to 0 in the .csv files
 
-double check whether or not the .txt files
-  include ALL students in the grade report..
-  e.g., Victor in 44.nextInt does not
+## Final Grading Process
+  1. double check the assignment of negative values...
+     - they should appear inthe .txt files
+     - they should be convert to 0 in the .csv files
+
+  1. double check whether or not the .txt files
+     - include ALL students in the grade report..
+     - e.g., Victor in 44.nextInt does not
   
---
-add time on tasks for timed activities
-for example some students only use 1 hour for a 2 hour quiz
---
-
 --
 double check the changes made to add a empty directory
 
@@ -63,9 +79,6 @@ I need to make the grade.report not track about and then move it into place at t
 
 export STUDENT_GRADE_REPORT="grade.report.regrade"               # To be added to the student's repo
 
----
-need a way to mark in the log files important dates
-  - due dates is only one of them
 
 ---
 
@@ -146,12 +159,7 @@ presume there is a defualt class file
 presume that file is put in to the right location with being described via the instructions
 
 --
-cleanup the 
 
-if [[ $\_dir/did_not_accept ]] ; then
-
-  -- 
-  get rid of the notaion of the release date...or starte adding it.
 
 # Todo List:
 
