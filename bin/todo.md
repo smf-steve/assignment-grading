@@ -13,6 +13,8 @@
 
 
 ## Assignment Preparation
+1. Update into Key directroy/rubric
+1. Update into Key directory/rubric_description
 1. Place into Student Directory
    - Due Date
    - Release Date

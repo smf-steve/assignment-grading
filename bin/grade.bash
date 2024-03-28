@@ -147,7 +147,6 @@ export CLASS_ROSTER="\${ASSIGNMENT_GRADING_DIR}/roster"
   # Sorted List of github usernames of each student
 
 export CLASS_MAKEFILE="\${ASSIGNMENT_GRADING_DIR}/makefile"
-export CLASS_GRADE_REPORT="\${ASSIGNMENT_GRADING_DIR}/grades.\${ASSIGNMENT_NAME}.txt"
 
 
 ##################################
@@ -206,6 +205,8 @@ export GRACE_PERIOD_FILE="\${ASSIGNMENT_DIR}/grace_period"
 
   # Assignment Based Files
   export LOCAL_GRADE_REPORT="\${ASSIGNMENT_DIR}/grades.txt"
+  export CLASS_GRADE_REPORT="\${ASSIGNMENT_GRADING_DIR}/grades.\${ASSIGNMENT_NAME}.txt"
+
   export SUBMISSION_DIR="\${ASSIGNMENT_DIR}/submissions"
   
   export KEY_DIR="\${ASSIGNMENT_DIR}/key"
@@ -309,6 +310,7 @@ function create_assignment () {
   mkdir ${SUBMISSION_DIR}
   touch ${LOCAL_GRADE_REPORT}
   ln    ${LOCAL_GRADE_REPORT} ${CLASS_GRADE_REPORT}
+
   date +"# %b %d %H:%M:%S"  > ${RELEASE_DATE_FILE}
   date +"# %b %d %H:%M:%S"  > ${DUE_DATE_FILE}
   cat > ${TIME_LIMIT_FILE} <<EOF
