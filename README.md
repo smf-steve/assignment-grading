@@ -40,6 +40,7 @@ For each assignment, the Professor creates a template repository.  This template
 For each assignment, the Professor creates a repository that extends the template repostory by adding (at least) the following files:
   * `answers.md`: the assignment with the Professor's answers incorporated
   * `grading_rubric`: a list of individual items used to score the assignment
+  * `rubric_description`: an optional description about the rubric
   * `makefile`: (optional) a file used to review and to evaluate a student submission
 
 ### Student's Assignment Repostory Structure:

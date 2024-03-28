@@ -19,6 +19,9 @@
 1. Within github, assign all templates to there id number
    first-assignment  => 01-first assignment
 
+1. Update using the given files with proper format
+   - Release Date:
+   - Due Date: 
 
 ## Pregrade stuff
 pregrade_submissions
@@ -37,108 +40,18 @@ does not make sense, when grading based upon code.
   1. double check whether or not the .txt files
      - include ALL students in the grade report..
      - e.g., Victor in 44.nextInt does not
-  
---
-double check the changes made to add a empty directory
+ 
 
-
-Need to assert type of grading
-  -- paper like, i.e. look for submission.md
-  -- programming, i.e., run the makefile
-
-Does doing a  `make grade` solve this
-  - i.e., move the process to grade in paper-grade
-  - make -f ${MAKE_FILE} grade 
-  - special cases need to be codify within the makefile.
-
-
----
-For regrades for programming assignments
-
-
-subl checksum.j
-subl grade.report
-git checkout task_3
-error: The following untracked working tree files would be overwritten by checkout:
-  grade.report
-Please move or remove them before you switch branches.
-Aborting
-make: *** [grade_task_3] Error 1
-Structure of Java
-
-need to remove the old grade.report.
-but this needs to be done for an tag that was moved after the point in time in which the grade.report was created.
-
-nop.. I think I need to track the changes.
-
-I need to make the grade.report not track about and then move it into place at the end.
-
-    mv grade.report.temp grade.report
-    git commit -m report    # only do this in the main
-
-
-export STUDENT_GRADE_REPORT="grade.report.regrade"               # To be added to the student's repo
-
-
----
-
-Note in the following... task_3 was not complete.
-   But they completed task_2 ... hence it was fully graded
-   But task_3 -- which did not have a tag by the due date
-      was not partially graded.
-
-   -- based upon the pre_grade routines, perhas
-      -- if a tag is not provided, then use 'git checkout due-date'
-         --- which is git checkout grading_information
-
-   this tag is really the start of a branch.. 
-     consider name change to  tag: Point_of_Grading
-
-
-*  0832e7b  Oct 25 02:05 -0700  (origin/main, origin/HEAD, main)
-*  37809c0  Oct 25 02:04 -0700  (tag: task_3)
-*  be6df82  Oct 25 02:03 -0700 
-*  127859b  Oct 13 00:51 -0700 
-* Due Date: Oct 12 23:59:59  -----------------
-*  b48c7a2  Oct 12 23:32 -0700  (grading_information)
-*  9b7b09c  Oct 12 23:27 -0700 
-*  09b8843  Oct 12 23:24 -0700 
-*  22c9493  Oct 12 23:21 -0700 
-*  8f13d82  Oct 12 23:18 -0700 
-*  24199ed  Oct 12 23:15 -0700 
-*  737ec75  Oct 12 23:12 -0700 
-*  458e0fe  Oct 12 23:07 -0700 
-*  935db1c  Oct 12 22:53 -0700 
-*  f599d1f  Oct 12 22:44 -0700 
-*  60b7919  Oct 12 22:33 -0700 
-*  7797799  Oct 12 22:29 -0700 
-*  7fe7b0d  Oct 12 21:59 -0700 
-*  2b54dca  Oct 12 21:54 -0700 
-*  ffb2dbf  Oct 12 20:58 -0700  (HEAD, tag: task_2)
-*  b9f5784  Oct 12 20:37 -0700 
-*  19356ea  Oct 12 20:34 -0700
+## Makefile setup
+ 1. Insert or remove notion of top-level defualt Makefile
+ 1. review all to ensure
+    - paper assignment is in place
+ 1. makefile for Java and MIPS
 
 
 
 
 ---
-done ...
-   commit and pus...
-   
-  exported more variables to that "make"
-  as them defined... when 
-  bash -lc ag_function
-
----
-
-it appears the the tag for the summision grading is not in place.
-
-need to eliminate my and githubs entrys int the gitlog
-
-regrade should 
-  Not delete the branch, but extend it.
-  reset grading however should delete the branch
-  
 
 
 -- 
@@ -165,6 +78,23 @@ presume that file is put in to the right location with being described via the i
     - due_date
     - time_limit
     - grace_period
+
+  1. Reset grading
+     * Faculty requested -- delete the grading branch 
+  1, Regrade
+     * student requested regrade
+       - previous grading information remains  
+       - becasue it has been merged if published, 
+          -- otherwise it is equiv to a reset
+
+# Tagging Issue:
+  Student did work after the due date
+  Student tag their work after the due date
+  Student wants grade based upon what they submitted before the due date
+
+  Final Answer..
+     - Student needs to tag what they want graded
+     - Student must ensure that the tag is set prior to the due 
 
 ## Pregrade step
   - identify all assignments that
@@ -246,9 +176,6 @@ presume that file is put in to the right location with being described via the i
         fi 
       ```
 
-# Makefiles
-  -- makefile for Java and MIPS
-
 
 # Bugs
 
@@ -272,9 +199,6 @@ presume that file is put in to the right location with being described via the i
        B: simple check that a signle ENV is set to
           - e.g, ASSIGNMENT_Director == the parent of the cwd
 
-    due date must have seconds in it
-       - not valid: mar 23 23:59
-     - valid:  mar 23 23:59:59
 
 
 
@@ -348,6 +272,7 @@ presume that file is put in to the right location with being described via the i
     ```     
 
 ## grade-status
+   - review the git extension in .profile.comp122/git... blah
    - determines the status of all the repos.
      1. HEAD   != origin/main -- we have to publish
      1. brannch != main we have to reset
@@ -355,9 +280,6 @@ presume that file is put in to the right location with being described via the i
    - commits made, etc.
    * git status provides to much info, need summary
 
-
-# git pull
-  1. validate git pull does an auto merge and/or reports if a conflic exists
 
 # activity report
   1. ag_commit_log
@@ -376,7 +298,7 @@ presume that file is put in to the right location with being described via the i
       * date1 date2 :  ag_show_commit_log from date1 back in time until date2 
       *  --   date2 :  ag_show_commit_log from now back in time until date2 
 
-    This is rally ag_show_commit_log without report header.
+    This is really ag_show_commit_log without report header.
 
 
 # Multiple grading ...
@@ -390,3 +312,4 @@ presume that file is put in to the right location with being described via the i
 
       - can allso include roster.<name> to overide the list of users
         - this would be helpful if the grading is for a class-based assignment
+

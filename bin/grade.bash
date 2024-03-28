@@ -167,7 +167,7 @@ export STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to 
                                                          # Otherwise the file is empty
 
 ## GRADING RELATED VARIABLES
-export SUBMISSION_TAG="graded_version"                   # Tag to identify the version of the repo that is graded
+export SUBMISSION_TAG="point_of_grading"                 # Tag to identify the version of the repo that is graded
 export GRADING_BRANCH="grading_information"
 
 export GRADING_EDITOR="subl"
@@ -441,6 +441,7 @@ function ag_regrade_submission () {
       cd $_dir 
       git checkout main >/dev/null 2>&1
       git branch -D ${GRADING_BRANCH}
+
       git tag -d ${SUBMISSION_TAG}
       if [[ -n $(git ls-files ${STUDENT_GRADE_REPORT}) ]] ; then 
         # We are tracking a previous grade_report, so move the old grade report
@@ -570,6 +571,8 @@ function ag_grade_submission () {
          echo "# --- Last Commit late by: $MINUTES_LATE minutes"
        fi 
        echo
+
+       [[ -s "${KEY_DIR}/rubric_description" ]]  && cat "${KEY_DIR}/rubric_description" 
     } > ${STUDENT_GRADE_REPORT_TMP}
 
 
@@ -835,12 +838,12 @@ function ag_pull_submission () {
        cd "${_dir}"
        git checkout main >/dev/null 2>&1
        git pull --no-edit
-       git pull --force --tags
        if [ $? == 0 ] ; then
          echo "Pulled: ${_student}" 
        else
          echo "Error Pulling: ${_student}" 
        fi > $terminal
+       git pull --force --tags
      ) >/dev/null 2>> ${GRADING_LOG}
    fi
 }
