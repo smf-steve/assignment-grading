@@ -36,6 +36,41 @@ tag: graded_version,
 does not make sense, when grading based upon code.
 
 
+
+## Standard Makefile for
+   - MIPS
+   - Java
+   - Makefile for paper submssion
+
+
+## Grade Report
+  - Review the presentation
+  - Review and revised the statistical report
+  - if Comments are made, force a new line as opposed to printing them at the end of the line
+
+
+
+# activity report
+  1. ag_commit_log
+  1. transform into 1st level function
+  1. ag_commit_log becomes the secondary command
+  1. usage  activity_reports [ --date --date ]  [ nil | file | args ]
+  1. include .. detached heads
+
+   $ activity_report [ date1 [ date2 ]  ]
+     activity_report now accept
+      * no args:  shows the ag_show_commit_log
+        --  -- :  shows the ag_show_commit_log
+      * date1   :     ag_show_commit_log from date1 back in time
+      * date1 --:     ag_show_commit_log from date1 back in time
+
+      * date1 date2 :  ag_show_commit_log from date1 back in time until date2 
+      *  --   date2 :  ag_show_commit_log from now back in time until date2 
+
+    This is really ag_show_commit_log without report header.
+
+
+
 ## Final Grading Process
   1. double check the assignment of negative values...
      - they should appear inthe .txt files
@@ -70,6 +105,7 @@ does not make sense, when grading based upon code.
           1. validates that the minum number of commits have been perform
           1. creates a stripped version to show the student what will be graded
      1. This should reduce the funcationality of grade_submission
+
 #  Pregrade step ... Code
    This could be done by a makefile
 
@@ -88,9 +124,6 @@ does not make sense, when grading based upon code.
     if [ $? -no ]
     
     Issue is one deliverable, or multiple
-
-
-
 
 ---
 
@@ -146,31 +179,6 @@ presume that file is put in to the right location with being described via the i
     - roster.submissions.exceptions: list accounts that failed the pregrade ste
     - roster.submissions: only those that passed the pregrade step
 
-## Grading: Possible issues
-
-  - Notition of the type of assignment
-    - is there any benefit to indicate that the assignment was code-base or paper-based or both 
-
-  - Drive from a makefile
-
-## Standard Makefile for
-   - MIPS
-   - Java
-   - Makefile for paper submssion
-
-
-## Grade Report
-  - Review the presentation
-  - Review and revised the statistical report
-  - if Comments are made, force a new line as opposed to printing them at the end of the line
-
-## Generate a Class Grade Report
-  - summary:  #students, #accepts, #valid_submissions, #average, 
-    - #students: wc classroom
-    - #accepts: ls -d submissions/* | wc
-    - #valid:  pretest past
-    - #average: of valid
-
 ---
 ## Logging Information
   - Been reducing the amount of logging
@@ -179,13 +187,6 @@ presume that file is put in to the right location with being described via the i
     - Aggregate Logging:  i.e., clone_submission"s", apply_all
     - Individual Loggin:  i.e. pull_submission student
 
-
-## Ability to have multiple assignments per repo
-  - grade_start  (default) 
-  - grade_start "\<name\>"
-  * grade_report.\<name>
-  * due.date.\<name>
-  * grades.42-string-mips.\<name>.txt
 
 
 ## Review
@@ -220,26 +221,6 @@ presume that file is put in to the right location with being described via the i
    * git status provides to much info, need summary
 
 
-# activity report
-  1. ag_commit_log
-  1. transform into 1st level function
-  1. ag_commit_log becomes the secondary command
-  1. usage  activity_reports [ --date --date ]  [ nil | file | args ]
-  1. include .. detached heads
-
-   $ activity_report [ date1 [ date2 ]  ]
-     activity_report now accept
-      * no args:  shows the ag_show_commit_log
-        --  -- :  shows the ag_show_commit_log
-      * date1   :     ag_show_commit_log from date1 back in time
-      * date1 --:     ag_show_commit_log from date1 back in time
-
-      * date1 date2 :  ag_show_commit_log from date1 back in time until date2 
-      *  --   date2 :  ag_show_commit_log from now back in time until date2 
-
-    This is really ag_show_commit_log without report header.
-
-
 # Multiple grading ...
 
    1. -- ability to have multiple assignments per repo
@@ -251,4 +232,12 @@ presume that file is put in to the right location with being described via the i
 
       - can allso include roster.<name> to overide the list of users
         - this would be helpful if the grading is for a class-based assignment
+
+
+## Ability to have multiple assignments per repo
+  - grade_start  (default) 
+  - grade_start "\<name\>"
+  * grade_report.\<name>
+  * due.date.\<name>
+  * grades.42-string-mips.\<name>.txt
 
