@@ -707,9 +707,7 @@ function ag_grade_submission () {
       echo
     } > $terminal
 
-    echo ${GRADING_MAKEFILE}
     MAKEFILE=${GRADING_MAKEFILE} make -k -f ${GRADING_MAKEFILE} grade
-    
 
     echo "Grading $_student"  > $terminal
     # Prompt the Professor for items related to the rubric
@@ -881,6 +879,8 @@ function commit_grade () {
       git checkout main >/dev/null 2>&1
       git pull
       git merge --no-ff -m 'merging grading information' ${GRADING_BRANCH}
+      git branch -D ${GRADING_BRANCH}.$(date '+%b_%d')
+      git branch -m ${GRADING_BRANCH} ${GRADING_BRANCH}.$(date '+%b_%d')
       if [[ $? != 0 ]] ; then
         echo "Merge conflict: ${_student}" > $terminal
       fi
