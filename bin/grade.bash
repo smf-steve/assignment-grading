@@ -74,6 +74,7 @@
 #             **  --hash indicates use the hash/tag version
 #             **  otherwise, use the hash associated with the due.date, etc.
 #
+#     - create_report
 #     - plot_grades
 #     - recreate_class_grade_report
 #
@@ -406,13 +407,13 @@ function regrade_submissions () {
   _grading_count=0
   _commit_provided="$1"
 
+  sanity_check
+
   if [[ "${_commit_provided:0:2}"  == "--" ]] ; then
     shift
   else
     _commit_provided=
   fi
-
-  assert_class_roster || return $?
 
   { 
     echo "Regrading Submissions:" $(date)
@@ -461,13 +462,13 @@ function grade_submissions () {
   _grading_count=0
   _commit_provided="$1"
 
+  sanity_check
+
   if [[ "${_commit_provided:0:2}"  == "--" ]] ; then
     shift
   else
     _commit_provided=
   fi
-
-  assert_class_roster || return $?
 
   { 
     echo "Grading Submissions:" $(date)
@@ -783,8 +784,7 @@ function input_list () {
 
 
 function reset_grading () {
-
-  assert_class_roster || return $?
+  sanity_check
 
   {
     echo "# Resetting grading: $(date)"
@@ -818,8 +818,7 @@ function ag_clone_submission () {
   [[ -n ${ON_CAMPUS} ]] && sleep 4
 }
 function clone_submissions () {
-
-  assert_class_roster || return $?
+  sanity_check
 
   { 
     echo "Cloning Submissions:" $(date)
@@ -851,7 +850,7 @@ function ag_pull_submission () {
 }
 function pull_submissions () {
 
-  assert_class_roster || return $?
+  sanity_check
 
   { 
     echo "Pulling submissions: $(date)"
@@ -890,7 +889,7 @@ function commit_grade () {
   fi
 }
 function commit_grades () {
-  assert_class_roster || return $?
+  sanity_check
 
   { 
     echo "Committing grades: $(date)"
@@ -921,8 +920,7 @@ function publish_grade () {
   fi
 }
 function publish_grades () {
-
- assert_class_roster || return $?
+  sanity_check
 
   {
     echo "# Publishing Grades: ${ASSIGNMENT_NAME} $(date)"
@@ -1048,7 +1046,7 @@ function meets_criteria  () {
   criteria="$1"
   shift
 
-  assert_class_roster || return $?
+  sanity_check
 
   for _student in $(input_list "$@") ; do
     _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
@@ -1069,8 +1067,7 @@ function meets_criteria  () {
 ## Following is now defunct due to timeline due.date information
 function checkout_due_date () {
   _date=${1}
-
-  assert_class_roster || return $?
+  sanity_check
 
   [[ -z ${_date} ]] && [[ -f due_date ]] && _date="$(cat_nocomments due_date)"
   [[ -z ${_date} ]] && return
@@ -1087,7 +1084,7 @@ function checkout_due_date () {
   done 
 }  
 
-
+alias sanity_check="assert_class_roster || return $?"
 function assert_class_roster () {
   if [[ ! -f ${CLASS_ROSTER} ]] ; then 
      _l=$(relative_filename "${CLASS_ROSTER}" )
@@ -1103,7 +1100,7 @@ function apply_all () {
   _CMD="$1"
   shift
 
-  assert_class_roster || return $?
+  sanity_check
 
   { 
     echo "Apply_all (\"$_CMD\"): $(date)"
@@ -1160,8 +1157,7 @@ function relative_filename() {
 
 
 function cat_nocomments () {
-
-  sed -e 's/^ *#.*$//'  -e '/^ *$/d' "$@"
+  sed -e 's/ *#.*$//'  -e '/^ *$/d' "$@"
 }
 
 function average () {
@@ -1175,9 +1171,20 @@ function average () {
   echo $(( sum / count  ))
 }
 
-function create_data_grades () {
-    cat grades.txt | sed -e 's/ *#.*$//' -e '/^ *$/d' | awk -F: '{ print $2}' | sort -n >data_grades
+function create_report () {
+  sanity_check
+  cat_nocomments grades.txt | awk -F: '{ print $2}' | sort -n >grades.data
+  plot_grades grades.data
+
+  cat <<EOF
+Assignment:            ${ASSIGNMENT_NAME}
+Enrolled Students:     $(wc -l < ${CLASS_ROSTER} | sed 's/ //g')
+Number of Submissions: $(grep -c -v -e "-5" grades.data)
+Number of Zeros:       $(grep -c -w "0" grades.data)
+Average (>0):          $(average < grades.data)
+EOF
 }
+
 
 function create_accept_grades () {
 
@@ -1187,8 +1194,7 @@ function create_accept_grades () {
 
 function plot_grades () {
 
-  create_data_grades
-  local average=$(average <data_grades)
+  local average=$(average < "$1")
 gnuplot <<EOF
 set term png
 set output "${ASSIGNMENT_NAME}-scores.png"
