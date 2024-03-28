@@ -1,5 +1,7 @@
 # ToDo:  Assignment Grading
 
+
+
 ## Potential New Features:
 1. add time on task for time activities
    - Release date
@@ -49,6 +51,43 @@ does not make sense, when grading based upon code.
  1. review all to ensure
     - paper assignment is in place
  1. makefile for Java and MIPS
+
+
+# Pregrade Step to Makefile
+  - this will allow the student to do run
+    $ make pregrade_check to see how things are.
+
+  1. Add a step to do a pregrade check.  
+     1. validates that the minimal has been done to do perform grading
+        - if paper-based submission, 
+
+     1. If not creates a file call "pregrade.report"
+        - this report is published and is given to student
+          1. submission.md exists
+          1. submission.md differs from key/assignment.md
+          1. checks for Name 
+          1. checks for GitHub Account
+          1. validates that the minum number of commits have been perform
+          1. creates a stripped version to show the student what will be graded
+     1. This should reduce the funcationality of grade_submission
+#  Pregrade step ... Code
+   This could be done by a makefile
+
+
+    make -f MAKEFILE precheck  >string
+    if $? error, then 
+       string: reasing for failure
+       score=0
+    
+    
+    for i in DELIVEREABLES
+      if all not found, exit
+    
+    
+    diff $STARTER DELIVEABLE
+    if [ $? -no ]
+    
+    Issue is one deliverable, or multiple
 
 
 
@@ -161,56 +200,8 @@ presume that file is put in to the right location with being described via the i
     - must have intial files that are for the deliverables
 
 
-## Internal Code
-  - error messages with relative filenames
-    - ../assignment-grading/.....
-  - update the names of functions to determine which are internal and not internal
-  - harding ensure all external functions have 
-    - a usage
-    - validity check to be calls.
-  - do we force all functions to only be called from the Assignment-directory
-    - NO. 
-    - No, but printout the name of the assignment being actied upon
-    - Yes.
-      ```bash
-        if [[ $ASSIGNMENT_NAME != $(basename $ASSIGNMENT_GRADING_DIR ]] ; then
-          echo "Error: Need to run grad"
-        fi 
-      ```
-
 
 # Bugs
-
-1. assignment-grading/grades..txt
-   - This file gets created under some condition
-   - Need to determine when and how
-
-# Santity Checks
-1. Grade_start
-   is used to do some santity checks and to source the environment
-   but 
-      - we have to cd to the correct assignment directory
-      - we have to run the other commands from that location
-      - Hence, other than doing a santity check, why do we need to run grade_start
-         -- BECAUSE then we don't need to resource the environent
-            -- if and only if
-               -- we are in the tree of  ..../assignment-grading/xxx-assignment
-
-    should each of the subsequent commands
-       A: resource the environment -- hance no need to do a grade_start
-       B: simple check that a signle ENV is set to
-          - e.g, ASSIGNMENT_Director == the parent of the cwd
-
-
-
-
-# Regrade
-  1. Regrade needs to have a different process..
-     - should it copy the original grade.report to something else
-     - should it have an extra line in the report noting it is a regrade.
-     - should the branch name be updated
-     1. Consider `regrade_submission hash username ...`
-
 
 # Push Hook
   1. updates a file to indicate when a particular push is made
@@ -218,60 +209,6 @@ presume that file is put in to the right location with being described via the i
      - this might make it easy for the students which is bad, they become dependent on it
   1. send an email to the student indicating blah...
 
-# Pregrade Step
-  1. Add a step to do a pregrade check.  
-     1. validates that the minimal has been done to do perform grading
-        - if paper-based submission, 
-
-     1. If not creates a file call "pregrade.report"
-        - this report is published and is given to student
-          1. submission.md exists
-          1. submission.md differs from key/assignment.md
-          1. checks for Name 
-          1. checks for GitHub Account
-          1. validates that the minum number of commits have been perform
-          1. creates a stripped version to show the student what will be graded
-     1. This should reduce the funcationality of grade_submission
-
-#  Pregrade step ... Code
-   This could be done by a makefile
-
-
-    make -f MAKEFILE precheck  >string
-    if $? error, then 
-       string: reasing for failure
-       score=0
-    
-    
-    for i in DELIVEREABLES
-      if all not found, exit
-    
-    
-    diff $STARTER DELIVEABLE
-    if [ $? -no ]
-    
-    Issue is one deliverable, or multiple
-
-
-
-
-## Grading Rubric / Description
-   - add option to include information in the grade report
-     ```
-     # Grading Report
-     # Github Account: 
-     # Assignment: 
-     # Assignment ID: 
-     # --- Due Date:        "Feb 19 23:59:59"
-     # --- Submission Date: "Feb 19 20:20:23"
-     # --- Tag & Hash:      "submission (83ecbf1)"
-     
-     %include $KEY_DIR/grading_description
-
-        8 Points:            Theoretical machines (10 points): 4 abstract machines
-     ---
-      98 Points:             Total
-    ```     
 
 ## grade-status
    - review the git extension in .profile.comp122/git... blah

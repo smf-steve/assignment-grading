@@ -1091,7 +1091,9 @@ function checkout_due_date () {
 function assert_class_roster () {
   if [[ ! -f ${CLASS_ROSTER} ]] ; then 
      _l=$(relative_filename "${CLASS_ROSTER}" )
-     echo "Error: Grading Roster \"../$_l\" not found."
+     echo "Error: Run \"grade-start\" first!"
+     echo "       Grading Roster \"../$_l\" not found."
+     echo ""
      return 1
   fi
   return 0
