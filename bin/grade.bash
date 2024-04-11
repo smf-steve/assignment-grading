@@ -443,7 +443,7 @@ function ag_regrade_submission () {
   if [[ -d ${_dir} ]] ; then 
     (
       cd $_dir 
-      git checkout main >/dev/null 2>&1
+      git switch main >/dev/null 2>&1
       git branch -D ${GRADING_BRANCH}
 
       git tag -d ${SUBMISSION_TAG}
@@ -540,7 +540,7 @@ function ag_grade_submission () {
     fi
 
     if [[ -n "${_commit}" ]] ; then 
-      git checkout ${_commit} >/dev/null 2>&1
+      git switch ${_commit} >/dev/null 2>&1
       SUBMISSION_HASH=$(git log --format="%h" --date="format:${AG_DATE_FORMAT}" -1)
       SUBMISSION_DATE=$(git log --format="%cd" --date="format:${AG_DATE_FORMAT}" -1)
       git tag ${SUBMISSION_TAG}
@@ -619,7 +619,7 @@ function ag_grade_submission () {
 
         ag_show_commit_log "${DUE_DATE}"
       }  >> ${STUDENT_GRADE_REPORT_TMP}
-      git checkout main >/dev/null 2>&1
+      git switch main >/dev/null 2>&1
       return
     fi
 
@@ -635,7 +635,7 @@ function ag_grade_submission () {
 
         ag_show_commit_log "${DUE_DATE}"
       }  >> ${STUDENT_GRADE_REPORT_TMP}
-      git checkout main >/dev/null 2>&1
+      git switch main >/dev/null 2>&1
       return
     fi
 
@@ -658,7 +658,7 @@ function ag_grade_submission () {
           ag_show_commit_log "${DUE_DATE}" ${STUDENT_SUBMISSION_FILE}
 
         }  >> ${STUDENT_GRADE_REPORT_TMP}
-        git checkout main >/dev/null 2>&1
+        git switch main >/dev/null 2>&1
         return
       fi
 
@@ -678,7 +678,7 @@ function ag_grade_submission () {
           ag_show_commit_log "${DUE_DATE}" ${STUDENT_SUBMISSION_FILE}
 
         }  >> ${STUDENT_GRADE_REPORT_TMP} 
-        git checkout main  >/dev/null 2>&1
+        git switch main  >/dev/null 2>&1
         return
       fi
       #######################################################
@@ -709,7 +709,7 @@ function ag_grade_submission () {
           ag_show_commit_log "${DUE_DATE}" ${STUDENT_SUBMISSION_FILE}
 
         }  >> ${STUDENT_GRADE_REPORT_TMP}
-        git checkout main >/dev/null 2>&1
+        git switch main >/dev/null 2>&1
         return
     fi
 
@@ -777,7 +777,7 @@ function ag_grade_submission () {
     } >>${CLASS_GRADE_REPORT}
 
     # Go back to the Canonical HEAD
-    git checkout main  >/dev/null 2>&1
+    git switch main  >/dev/null 2>&1
   ) 
 }
 
@@ -858,7 +858,7 @@ function ag_pull_submission () {
    if [[ -d "${_dir}" ]] ; then 
      ( 
        cd "${_dir}"
-       git checkout main >/dev/null 2>&1
+       git switch main >/dev/null 2>&1
        git pull --no-edit
        if [ $? == 0 ] ; then
          echo "Pulled: ${_student}" 
@@ -890,7 +890,7 @@ function commit_grade () {
      # if there is no .git directory, then nothing to commit
     ( 
       cd ${_dir} 
-      git checkout ${GRADING_BRANCH} >/dev/null 2>&1
+      git switch ${GRADING_BRANCH} >/dev/null 2>&1
       if [[ -f ${KEY_ANSWER_FILE} ]] ; then
         cp ${KEY_ANSWER_FILE} .
         git add ${STUDENT_ANSWER_KEY}
@@ -899,7 +899,7 @@ function commit_grade () {
       mv ${STUDENT_GRADE_REPORT_TMP} ${STUDENT_GRADE_REPORT}
       git add ${STUDENT_GRADE_REPORT}
       git commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT} 
-      git checkout main >/dev/null 2>&1
+      git switch main >/dev/null 2>&1
       git pull
       git merge --no-ff -m 'merging grading information' ${GRADING_BRANCH}
       git branch -D ${GRADING_BRANCH}.$(date '+%b_%d')
@@ -1048,7 +1048,7 @@ function ag_checkout_date () {
         echo "# Checkout Date: ${_date}"
         echo "# Checkout Hash: ${_hash}"
         echo "# Log Entries before checkout date:"
-        git checkout ${_hash}  >/dev/null 2>&1
+        git switch ${_hash}  >/dev/null 2>&1
         echo                              
 
         git log --decorate=full --oneline
