@@ -102,6 +102,7 @@ ASSIGNMENT_ENV="assignment.env"
 export GRADING_SCRIPT="${HOME}/bin/grade.bash"  # This is the name of this particular script 
 export GIT_STATISTICS_BASH="${HOME}/bin/git.statistics.bash"
 
+export AG_DATE_FORMAT='%b %d %T %Z'
 
 ###########################################################################
 # The next two functions create the grading.env and assignment.env files.
@@ -312,8 +313,8 @@ function create_assignment () {
   touch ${LOCAL_GRADE_REPORT}
   ln    ${LOCAL_GRADE_REPORT} ${CLASS_GRADE_REPORT}
 
-  date +"# %b %d %H:%M:%S"  > ${RELEASE_DATE_FILE}
-  date +"# %b %d %H:%M:%S"  > ${DUE_DATE_FILE}
+  date +"# ${AG_DATE_FORMAT}"  > ${RELEASE_DATE_FILE}
+  date +"# ${AG_DATE_FORMAT}"  > ${DUE_DATE_FILE}
   cat > ${TIME_LIMIT_FILE} <<EOF
     # 75M
     # 1H15M
@@ -407,7 +408,7 @@ function regrade_submissions () {
   _grading_count=0
   _commit_provided="$1"
 
-  sanity_check
+  assert_class_roster || return $?
 
   if [[ "${_commit_provided:0:2}"  == "--" ]] ; then
     shift
@@ -462,7 +463,7 @@ function grade_submissions () {
   _grading_count=0
   _commit_provided="$1"
 
-  sanity_check
+  assert_class_roster || return $?
 
   if [[ "${_commit_provided:0:2}"  == "--" ]] ; then
     shift
@@ -540,8 +541,8 @@ function ag_grade_submission () {
 
     if [[ -n "${_commit}" ]] ; then 
       git checkout ${_commit} >/dev/null 2>&1
-      SUBMISSION_HASH=$(git log --format="%h" --date="format:%b %d %T" -1)
-      SUBMISSION_DATE=$(git log --format="%cd" --date="format:%b %d %T" -1)
+      SUBMISSION_HASH=$(git log --format="%h" --date="format:${AG_DATE_FORMAT}" -1)
+      SUBMISSION_DATE=$(git log --format="%cd" --date="format:${AG_DATE_FORMAT}" -1)
       git tag ${SUBMISSION_TAG}
     else
       : # There is nothing to grade
@@ -606,8 +607,7 @@ function ag_grade_submission () {
     #   -- this value is now added to the grade report for further analysis
     _accepted="$(date -r ${ACCEPT_TS} '+%Y%m%d%H%M')"
 
-    if [[ -z "${SUBMISSION_HASH}" ]] ; then
-      # student did not accept the assignment prior to the due-date
+    if [[ -z "${SUBMISSION_HASH}" ]] ; then                 # Not Accepted prior to due-date
       _score=${_not_accepted}
       printf "\t Student accepted the assignment AFTER the due date\n\n"
       printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "${_accepted}" "Accepted AFTER due date" >>${CLASS_GRADE_REPORT}
@@ -623,9 +623,7 @@ function ag_grade_submission () {
       return
     fi
 
-
-    if [[ ${ACCEPT_HASH} == ${SUBMISSION_HASH} ]] ; then
-      # no work was done by the student.
+    if [[ ${ACCEPT_HASH} == ${SUBMISSION_HASH} ]] ; then    # No work was done by the student.
       _score=${_only_accepted}
       printf "\t No activity by the student\n\n"
       printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_only_accepted}" "${_accepted}" "Student only accepted the assignment" >>${CLASS_GRADE_REPORT}
@@ -641,7 +639,7 @@ function ag_grade_submission () {
       return
     fi
 
-    if [[  -f ${KEY_ASSIGNMENT_FILE} ]] ; then             # This is a PAPER Assignment
+    if [[  -f ${KEY_ASSIGNMENT_FILE} ]] ; then              # This is a PAPER Assignment
 
       if [[ ! -f ${STUDENT_SUBMISSION_FILE} ]] ; then      # Nothing Submitted
         _score=${_no_work}
@@ -664,9 +662,9 @@ function ag_grade_submission () {
         return
       fi
 
-      diff ${STUDENT_SUBMISSION_FILE} ${STUDENT_ASSIGNMENT_FILE} >/dev/null 2>&1
+      diff ${STUDENT_SUBMISSION_FILE} ${STUDENT_ASSIGNMENT_FILE} >/dev/null 2>&1 
+      #  The Submission File is effectively Blank
       if (( $? == 0 )) ; then
-        #  The Submission File is effectively Blank
 
         _score=${_no_work}
         printf "\t No updates to ${STUDENT_SUBMISSION_FILE}\n"
@@ -687,11 +685,36 @@ function ag_grade_submission () {
       ## Special Cases Complete
       #######################################################
     fi
+
     # Note there is a return in the code block above.
     # Hence, flow might not get here
 
+
+    # Validate that student successfully made a valid submission
+    MAKEFILE=${GRADING_MAKEFILE} make -k -f ${GRADING_MAKEFILE} pregrade
+    if [[ $? != 0 ]] ; then
+       _score=${_no_work}
+       { 
+          printf "\t Failed pregrade step\n\n"
+          printf "\nFinal Score $_student: 0\n\n" ;
+        } > $terminal
+
+        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "${_accepted}" "Failed pregrade test" >>${CLASS_GRADE_REPORT}
+        { 
+          echo "Failed pregrade step (make pregrade): ${STUDENT_SUBMISSION_FILE}"
+          echo
+          echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\"        # ${_student}"
+          echo
+
+          ag_show_commit_log "${DUE_DATE}" ${STUDENT_SUBMISSION_FILE}
+
+        }  >> ${STUDENT_GRADE_REPORT_TMP}
+        git checkout main >/dev/null 2>&1
+        return
+    fi
+
     if [[ ${PREGRADE} == "TRUE" ]]; then 
-      # We are ran the pregrade to filter out special cases
+      # We ran the pregrade to filter out special cases
       # If we are here, the current student needs to be 
       # fully graded.  Hence reset their grading status.
       reset_grading "$_student"
@@ -707,8 +730,8 @@ function ag_grade_submission () {
       echo
     } > $terminal
 
-    MAKEFILE=${GRADING_MAKEFILE} make -k -f ${GRADING_MAKEFILE} grade
-
+    # All is good to actual grade the assignment
+    make -f ${GRADING_MAKEFILE} grade
     echo "Grading $_student"  > $terminal
     # Prompt the Professor for items related to the rubric
     {
@@ -719,26 +742,26 @@ function ag_grade_submission () {
         else
           echo $_line          > $terminal
           read _value _comment < $terminal
-          printf "  %2d Points:  $_line: $_comment\n" $_value
+          printf "  %2d Points:  $_line:\n" $_value
+          if [[ -n "$_comment" ]] ; then
+            printf "                    $_comment\n"
+          fi
           (( _score += _value ))
         fi
       done < ${KEY_RUBRIC_FILE} >> ${STUDENT_GRADE_REPORT_TMP}
-    }
 
-    # Add the grade.report epilogue
-    {
       echo "----"
       printf " %3d Points:  Total\n" ${_score}
       echo
       echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
       echo
+    }
 
-      ag_show_commit_log "${DUE_DATE}"
+    # Add the activity report
+    ag_show_commit_log "${DUE_DATE}" >> ${STUDENT_GRADE_REPORT_TMP}
 
-    } >> ${STUDENT_GRADE_REPORT_TMP}
 
-
-    # Print out final score
+    # Print out final score to the terminal..
     { 
       printf "\nFinal Score ${_student}: ${_score}\n\n" ;
     } > $terminal
@@ -782,7 +805,7 @@ function input_list () {
 
 
 function reset_grading () {
-  sanity_check
+  assert_class_roster || return $?
 
   {
     echo "# Resetting grading: $(date)"
@@ -816,7 +839,7 @@ function ag_clone_submission () {
   [[ -n ${ON_CAMPUS} ]] && sleep 4
 }
 function clone_submissions () {
-  sanity_check
+  assert_class_roster || return $?
 
   { 
     echo "Cloning Submissions:" $(date)
@@ -848,7 +871,7 @@ function ag_pull_submission () {
 }
 function pull_submissions () {
 
-  sanity_check
+  assert_class_roster || return $?
 
   { 
     echo "Pulling submissions: $(date)"
@@ -889,7 +912,7 @@ function commit_grade () {
   fi
 }
 function commit_grades () {
-  sanity_check
+  assert_class_roster || return $?
 
   { 
     echo "Committing grades: $(date)"
@@ -920,7 +943,7 @@ function publish_grade () {
   fi
 }
 function publish_grades () {
-  sanity_check
+  assert_class_roster || return $?
 
   {
     echo "# Publishing Grades: ${ASSIGNMENT_NAME} $(date)"
@@ -1046,7 +1069,7 @@ function meets_criteria  () {
   criteria="$1"
   shift
 
-  sanity_check
+  assert_class_roster || return $?
 
   for _student in $(input_list "$@") ; do
     _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
@@ -1067,7 +1090,7 @@ function meets_criteria  () {
 ## Following is now defunct due to timeline due.date information
 function checkout_due_date () {
   _date=${1}
-  sanity_check
+  assert_class_roster || return $?
 
   [[ -z ${_date} ]] && [[ -f due_date ]] && _date="$(cat_nocomments due_date)"
   [[ -z ${_date} ]] && return
@@ -1084,7 +1107,6 @@ function checkout_due_date () {
   done 
 }  
 
-alias sanity_check="assert_class_roster || return $?"
 function assert_class_roster () {
   if [[ ! -f ${CLASS_ROSTER} ]] ; then 
      _l=$(relative_filename "${CLASS_ROSTER}" )
@@ -1100,7 +1122,7 @@ function apply_all () {
   _CMD="$1"
   shift
 
-  sanity_check
+  assert_class_roster || return $?
 
   { 
     echo "Apply_all (\"$_CMD\"): $(date)"
@@ -1124,21 +1146,21 @@ function ag_show_commit_log () {
   FILE_LIST="$@"
 
   if [[ -z "$DUE_DATE" ]] ; then
-    DUE_DATE="$(date '+%b %d %T')"
+    DUE_DATE="$(date "+${AG_DATE_FORMAT}")"
   fi
   
   echo "STUDENT COMMIT HISTORY:"
   echo
-  git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
+  git log --format=" %h %%%an%% %cd %d"  --date="format-local: ${AG_DATE_FORMAT}" \
           --graph  --after  "${DUE_DATE}" origin/main $(git tag) -- ${FILE_LIST} ':!README.md' |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
 
   if [[ -z ${DUE_DATE} ]] ; then
-    echo "* Now:      $(date '+%b %d %T')  ---------------"
+    echo "* Now:      $(date "+${AG_DATE_FORMAT}")  ---------------"
   else
     echo "* Due Date: ${DUE_DATE}  -----------------"
   fi
-  git log --format=" %h %%%an%% %cd %d"  --date="format-local: %b %d %H:%M %z" \
+  git log --format=" %h %%%an%% %cd %d"  --date="format-local: ${AG_DATE_FORMAT}" \
           --graph  --before "${DUE_DATE}" origin/main $(git tag) -- ${FILE_LIST} ':!README.md' |
      grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
   echo
@@ -1172,7 +1194,7 @@ function average () {
 }
 
 function create_report () {
-  sanity_check
+  assert_class_roster || return $?
   cat_nocomments grades.txt | awk -F: '{ print $2}' | sort -n >grades.data
   plot_grades grades.data
 
@@ -1216,7 +1238,7 @@ function plot_grades_accept () {
   create_data_grades
   create_accept_grades
 
-  local due_date=$(date -j -f '%b %d %T' "${DUE_DATE}" '+%Y%m%d%H%M')
+  local due_date=$(date -j -f "${AG_DATE_FORMAT}" "${DUE_DATE}" '+%Y%m%d%H%M')
   local average=$(average <data_grades)
 
 gnuplot <<EOF

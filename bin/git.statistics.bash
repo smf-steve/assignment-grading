@@ -1,10 +1,13 @@
 #! /bin/bash 
 # format: ct = committer timestamp
 
+## the `date` command on MacOS is different then Linux
+
+
 trap 'rm .$$_full.log' 0
-# due_date="Nov 12 00:00:00"  # "+%b %d %T"
-# time_limit="2H"  # 120M
-# grace_period="2M"   # 2 minutes
+# due_date="Nov 12 00:00:00 PDT"  # "+%b %d %T %Z"   
+# time_limit="2H"                 # 2 hours == 120 minutes
+# grace_period="2M"               # 2 minutes
 
 ### The following appear to be the variables that are used in grade.bash
 ##
@@ -28,16 +31,17 @@ TIME_LIMIT=
 GRACE_PERIOD="0S"
 TIMELIMIT_DUE_DATE=
 
+
 # Algorithm:
 #
 # 1. Read git log: "hash (%h) commit TS (%ct)
 # 2. Extract Info
-#    - ACCEPT_INFO <-- last line
-#    - LAST_COMMIT_INFO <-- first line
+#    - ACCEPT_INFO          <-- last line
+#    - LAST_COMMIT_INFO     <-- first line
 # 3. Determine version_TS
 #    - If no set due_date nor time_limit, then LAST_COMMIT_INFO
 #    - due_date_TS
-#      * date -j -f "%b %d %T" "$(due_date)" "+%s"
+#      * date -j -f "${AG_DATE_FORMAT}" "$(due_date)" "+%s"
 #    - time_limit_TS = accept_date + time_limit
 #      * date -r <ts> -v +"$time_limit"
 #    - version_TS = min(due_date_TS, time_limit_TS)
@@ -74,7 +78,7 @@ fi
 
 if [[ -s "${DUE_DATE_FILE}" ]] ; then
   DUE_DATE="$(cat_nocomments ${DUE_DATE_FILE})"
-  DUE_DATE_TS=$( date -j -f '%b %d %T' -v +${GRACE_PERIOD} "${DUE_DATE}" '+%s' )
+  DUE_DATE_TS=$( date -j -f "${AG_DATE_FORMAT}" -v +${GRACE_PERIOD} "${DUE_DATE}" '+%s' )
 fi
 
 if [[ -s "${TIME_LIMIT_FILE}" ]] ; then
@@ -89,7 +93,7 @@ else
 fi
 
 TIMELIMIT_DUE_DATE_TS="${SUBMISSION_TS}"
-TIMELIMIT_DUE_DATE="$(date -r ${SUBMISSION_TS} '+%b %d %T')"
+TIMELIMIT_DUE_DATE="$(date -r ${SUBMISSION_TS} "+${AG_DATE_FORMAT}")"
 
 # Determine the SUBMISSION INFORMATION
 if (( SUBMISSION_TS < LAST_COMMIT_INFO[1] )) ; then
@@ -117,7 +121,7 @@ if (( ${#SUBMISSION_INFO[@]} == 0 )) ; then
 else
    SUBMISSION_HASH="${SUBMISSION_INFO[0]}"
    SUBMISSION_TS="${SUBMISSION_INFO[1]}"
-   SUBMISSION_DATE="$(date -r ${SUBMISSION_INFO[1]} '+%b %d %T')"
+   SUBMISSION_DATE="$(date -r ${SUBMISSION_INFO[1]} "+${AG_DATE_FORMAT}")"
 
    NUM_COMMITS_POST_SUBMISSION="$(( $(sed -n /${SUBMISSION_HASH}/= .$$_full.log) - 1))"
 fi
@@ -157,14 +161,14 @@ fi
 if [[ -z "${TIME_LIMIT}" ]] ; then
   DUE_DATE="${DUE_DATE}"
 else
-  ACCEPT_DATE="$(date -r ${ACCEPT_INFO[1]} '+%b %d %T')"
+  ACCEPT_DATE="$(date -r ${ACCEPT_INFO[1]} "+${AG_DATE_FORMAT}")"
   CUTOFF_DATE="${DUE_DATE}"
   DUE_DATE="${TIMELIMIT_DUE_DATE}"
 fi
 
 ACEPT_HASH="${ACCEPT_INFO[0]}"
 ACCEPT_TS="${ACCEPT_INFO[1]}"
-ACCEPT_DATE="$(date -r ${ACCEPT_TS} '+%b %d %T')"
+ACCEPT_DATE="$(date -r ${ACCEPT_TS} "+${AG_DATE_FORMAT}")"
 
 
 #cat > ${STUDENT_STAT_REPORT} <<EOF
@@ -210,7 +214,7 @@ ACCEPT_DATE="$(date -r ${ACCEPT_TS} '+%b %d %T')"
 #  
 #  LAST_COMMIT_HASH="${LAST_COMMIT_INFO[0]}"
 #  LAST_COMMIT_TS="${LAST_COMMIT_INFO[1]}"
-#  LAST_COMMIT_DATE="$(date -r ${LAST_COMMIT_INFO[1]} '+%b %d %T')"
+#  LAST_COMMIT_DATE="$(date -r ${LAST_COMMIT_INFO[1]} "+${AG_DATE_FORMAT})"
 #  
 #  SUBMISSION_HASH="${SUBMISSION_HASH}"
 #  SUBMISSION_TS="${SUBMISSION_TS}"
@@ -218,7 +222,7 @@ ACCEPT_DATE="$(date -r ${ACCEPT_TS} '+%b %d %T')"
 #  
 #  ACCEPT_HASH="${ACCEPT_INFO[0]}"
 #  ACCEPT_TS="${ACCEPT_INFO[1]}"
-#  ACCEPT_DATE="$(date -r ${ACCEPT_INFO[1]} '+%b %d %T')"
+#  ACCEPT_DATE="$(date -r ${ACCEPT_INFO[1]} "+${AG_DATE_FORMAT}")"
 #  
 #  EOF
 #  
