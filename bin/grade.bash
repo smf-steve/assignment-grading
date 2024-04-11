@@ -434,7 +434,6 @@ function regrade_submissions () {
     echo
   } >> "${CLASS_GRADE_REPORT}"
 }
-
 function ag_regrade_submission () {
   _student=${1}
   _commit=${2}
@@ -444,9 +443,14 @@ function ag_regrade_submission () {
     (
       cd $_dir 
       git switch main >/dev/null 2>&1
-      git branch -D ${GRADING_BRANCH}
+      
 
+      # If the Grading Branch exists, 
+      #   1. it has not been published
+      #   1. so delete it
+      git branch -D ${GRADING_BRANCH} >/dev/null 2>&1
       git tag -d ${SUBMISSION_TAG}
+
       if [[ -n $(git ls-files ${STUDENT_GRADE_REPORT}) ]] ; then 
         # We are tracking a previous grade_report, so move the old grade report
         git mv ${STUDENT_GRADE_REPORT} ${STUDENT_GRADE_REPORT}.$(date '+%m-%d-%T')
@@ -487,7 +491,6 @@ function grade_submissions () {
     echo
   } >> "${CLASS_GRADE_REPORT}"
 }
-
 function ag_grade_submission () {
   _not_accepted=-10
   _only_accepted=-5
@@ -782,7 +785,6 @@ function ag_grade_submission () {
 }
 
 
-
 function input_list () {
    case  $# in
       0 )
@@ -803,7 +805,6 @@ function input_list () {
    esac | grep -v "^$"  # skip over blank lines
 }
 
-
 function reset_grading () {
   assert_class_roster || return $?
 
@@ -820,7 +821,6 @@ function reset_grading () {
     fi
   done > /dev/null  2>&1
 }
-
 
 function ag_clone_submission () {
   _student="${1}"
@@ -849,7 +849,6 @@ function clone_submissions () {
     ag_clone_submission ${_student}
   done 2> /dev/null
 }  
-
 
 function ag_pull_submission () {
    _student=${1}
@@ -901,8 +900,8 @@ function commit_grade () {
       git commit -m 'Added Student Grade Report' ${STUDENT_GRADE_REPORT} 
       git switch main >/dev/null 2>&1
       git pull
-      git merge --no-ff -m 'merging grading information' ${GRADING_BRANCH}
-      git branch -D ${GRADING_BRANCH}.$(date '+%b_%d')
+      git merge --no-ff -m 'Merging grading information' ${GRADING_BRANCH}
+      git branch -D ${GRADING_BRANCH}.$(date '+%b_%d')  >/dev/null 2>&1
       git branch -m ${GRADING_BRANCH} ${GRADING_BRANCH}.$(date '+%b_%d')
       if [[ $? != 0 ]] ; then
         echo "Merge conflict: ${_student}" > $terminal
@@ -931,7 +930,12 @@ function publish_grade () {
   if [[ -d "${_dir}" ]] ; then
     ( 
       cd ${_dir} 
-      git push --mirror
+      ## git branch --set-upstream-to=origin ${GRADING_BRANCH}
+      ## git push  origin ${GRADING_BRANCH}
+      ##  No need to make the grading branch a tracking branch
+      ##  That branch has been merged with main
+
+      git push
       return_value="$?"
       if [[ ${return_value} == 0 ]] ; then
         echo "Published (pushed): ${_student}" >$terminal
