@@ -927,7 +927,7 @@ function publish_grade () {
   _student=${1}
   _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}
 
-  if [[ -d "${_dir}" ]] ; then
+  if [[ -d "${_dir}/.git" ]] ; then
     ( 
       cd ${_dir} 
       ## git branch --set-upstream-to=origin ${GRADING_BRANCH}
