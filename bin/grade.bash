@@ -103,7 +103,7 @@ export GRADING_SCRIPT="${HOME}/bin/grade.bash"  # This is the name of this parti
 export GIT_STATISTICS_BASH="${HOME}/bin/git.statistics.bash"
 
 export AG_DATE_FORMAT='%b %d %T %Z'
-
+export AG_DATE_FORMAT="%b %d %H:%M %Z"
 ###########################################################################
 # The next two functions create the grading.env and assignment.env files.
 # These files assign all the relative defaults for each assignment.
@@ -321,7 +321,7 @@ function create_assignment () {
 EOF
 
   cat > ${GRACE_PERIOD_FILE} <<EOF
-    # 5M
+  0S  # 5M
 EOF
 }
 
@@ -1193,7 +1193,7 @@ function average () {
       (( count++ ))
       (( sum+= _score ))
     fi
-  done < data_grades
+  done 
   echo $(( sum / count  ))
 }
 
@@ -1203,11 +1203,10 @@ function create_report () {
   plot_grades grades.data
 
   cat <<EOF
-Assignment:            ${ASSIGNMENT_NAME}
-Enrolled Students:     $(wc -l < ${CLASS_ROSTER} | sed 's/ //g')
-Number of Submissions: $(grep -c -v -e "-5" grades.data)
-Number of Zeros:       $(grep -c -w "0" grades.data)
-Average (>0):          $(average < grades.data)
+Assignment:          ${ASSIGNMENT_NAME}
+Enrolled Students:   $(wc -l < ${CLASS_ROSTER} | sed 's/ //g')
+Valid Submissions:   $(grep -c -v -e "-" grades.data)
+Average:             $(average < grades.data)
 EOF
 }
 
@@ -1232,7 +1231,7 @@ set format x ""
 set xtics 1,1
 set key fixed left top
 set key outside right top title "Legend"
-plot [0:80][-10:105] 0 notitle, ${average} title "average (>0)", "data_grades" with linespoints title "score"
+plot [0:80][-10:105] 0 notitle, ${average} title "average (>0)", "grades.data" with linespoints title "score"
 EOF
 
 }
@@ -1243,7 +1242,7 @@ function plot_grades_accept () {
   create_accept_grades
 
   local due_date=$(date -j -f "${AG_DATE_FORMAT}" "${DUE_DATE}" '+%Y%m%d%H%M')
-  local average=$(average <data_grades)
+  local average=$(average < "$1")
 
 gnuplot <<EOF
 set term png

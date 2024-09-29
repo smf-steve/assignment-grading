@@ -83,7 +83,9 @@ fi
 
 if [[ -s "${TIME_LIMIT_FILE}" ]] ; then
   TIME_LIMIT="$(cat_nocomments ${TIME_LIMIT_FILE})"
-  TIME_LIMIT_TS=$( date -r ${ACCEPT_INFO[1]} -v +${TIME_LIMIT} -v +${GRACE_PERIOD} '+%s' )
+  if [[ -n "${TIME_LIMIT}" ]] ; then
+    TIME_LIMIT_TS=$( date -r ${ACCEPT_INFO[1]} -v +${TIME_LIMIT} -v +${GRACE_PERIOD} '+%s' )
+  fi
 fi
 
 if (( TIME_LIMIT_TS < DUE_DATE_TS )) ; then 
