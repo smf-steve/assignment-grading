@@ -1,5 +1,12 @@
 # ToDo:  Assignment Grading
 
+## Questions:
+   - is there a default config to make all branches to be tracking
+   - are topci branches transformed into tracking branches upon a merge
+   - how do the grade_information branch placed on the remote
+     * it appears that the grade_information branch is automatically set to be track
+     * but I on't know how this is done
+   ? Answer:   git push --mirror
 
 
 ## Potential New Features:
@@ -32,9 +39,12 @@ pregrade_submissions
 make -f $KEY_DIR/makefile pregrade
 
 --
+Code Grading...
+  -- list of tags: place them in the log report
+
+
 tag: graded_version,
 does not make sense, when grading based upon code.
-
 
 
 ## Standard Makefile for
@@ -47,7 +57,7 @@ does not make sense, when grading based upon code.
   - Review the presentation
   - Review and revised the statistical report
   - if Comments are made, force a new line as opposed to printing them at the end of the line
-
+  - refactor to use activity report
 
 
 # activity report
