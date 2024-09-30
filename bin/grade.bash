@@ -350,8 +350,9 @@ function grade_start () {
   GRADING_MAKEFILE=${MAKEFILE}
   if [[ -z "${GRADING_MAKEFILE}" ]] ; then 
      GRADING_MAKEFILE="${CLASS_MAKEFILE}"
-     [[ -f "${KEY_MAKEFILE}" ]] && GRADING_MAKEFILE="${KEY_MAKEFILE}"
   fi 
+  [[ -f "${KEY_MAKEFILE}" ]] && GRADING_MAKEFILE="${KEY_MAKEFILE}"
+
 
   # Rerun these commands, in case of any updates after the initial `grade_start` is executed
   export RELEASE_DATE="Not Defined"
@@ -753,11 +754,13 @@ function ag_grade_submission () {
         fi
       done < ${KEY_RUBRIC_FILE} >> ${STUDENT_GRADE_REPORT_TMP}
 
-      echo "----"
-      printf " %3d Points:  Total\n" ${_score}
-      echo
-      echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
-      echo
+      { 
+        echo "----"
+        printf " %3d Points:  Total\n" ${_score}
+        echo
+        echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"$_score\"        # ${_student}"
+        echo
+      } >> ${STUDENT_GRADE_REPORT_TMP}
     }
 
     # Add the activity report
@@ -1134,7 +1137,7 @@ function apply_all () {
 
   for _student in $(input_list "$@") ; do
     _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
-    if [[ -d "$_dir" ]] ; then 
+    if [[ -d "$_dir" ]] && [[ -d "$_dir/.git" ]]; then 
       (
         cd ${_dir}
         basename ${PWD}
