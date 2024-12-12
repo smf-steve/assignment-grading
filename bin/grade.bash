@@ -92,8 +92,8 @@
 #
 #   For grade incorporation
 #     - review/update the grades in grades.<xx-assignment>.txt, e.g., regrades
-#     - cd <assignment-grading> grades_log2csv 
-#       - convert the log file into a .csv file for integration
+#     - cd local;
+#       - ls ../grades.<xx-assignment>.txt | all_grades2csv
 #     * record the grades: "insert grades.<assignment>.csv" into the master spreadsheet
 #############################################################
 
@@ -168,7 +168,7 @@ export STUDENT_ACTIVITY_REPORT="activity.report"         # IF a call is made to 
                                                          # Otherwise the file is empty
 
 ## GRADING RELATED VARIABLES
-export SUBMISSION_TAG="point_of_grading"                 # Tag to identify the version of the repo that is graded
+export SUBMISSION_TAG="graded_version"                  # Tag to identify the version of the repo that is graded
 export GRADING_BRANCH="grading_information"
 
 export GRADING_EDITOR="subl"
@@ -509,18 +509,19 @@ function ag_grade_submission () {
   echo "Grading Count: $_grading_count" > $terminal
   echo "Grading $_student" > $terminal
 
+  if [[ -f $_dir/${DID_NOT_ACCEPT_FILE} ]] ; then
+    printf "\tStudent did not accept assignment.\n" > $terminal
+    # Student did not accept the assignment, and 
+    # and we have already recorded this student in the report
+    return
+  fi
+
   if [[ ! -d $_dir ]] ; then
     printf "\tStudent did not accept assignment.\n" > $terminal
     printf "%-20s: %3d\t# Did not ACCEPT assignment.\n"  \
            "${_student}" "${_not_accepted}" >>${CLASS_GRADE_REPORT}
     mkdir $_dir
     touch $_dir/${DID_NOT_ACCEPT_FILE}
-    return
-  fi
-
-  if [[ -f $_dir/${DID_NOT_ACCEPT_FILE} ]] ; then
-    # Student did not accept the assignment, and 
-    # and we have already recorded this student in the report
     return
   fi
 
@@ -544,7 +545,7 @@ function ag_grade_submission () {
     fi
 
     if [[ -n "${_commit}" ]] ; then 
-      git switch ${_commit} >/dev/null 2>&1
+      git switch --detach ${_commit} >/dev/null 2>&1
       SUBMISSION_HASH=$(git log --format="%h" --date="format:${AG_DATE_FORMAT}" -1)
       SUBMISSION_DATE=$(git log --format="%cd" --date="format:${AG_DATE_FORMAT}" -1)
       git tag ${SUBMISSION_TAG}
@@ -580,9 +581,9 @@ function ag_grade_submission () {
        fi 
        echo
 
-       [[ -s "${KEY_DIR}/rubric_description" ]]  && cat "${KEY_DIR}/rubric_description" 
+       [[ -s "${KEY_DIR}/rubric_description" ]]  && 
+         { cat "${KEY_DIR}/rubric_description"  ; echo ; }
     } > ${STUDENT_GRADE_REPORT_TMP}
-
 
 
     ##### Handle Special Cases
@@ -607,6 +608,7 @@ function ag_grade_submission () {
 
     #######################################################
 
+
     # Set the value of when the student accepted the assignment -- 
     #   -- this value is now added to the grade report for further analysis
     _accepted="$(date -r ${ACCEPT_TS} '+%Y%m%d%H%M')"
@@ -614,7 +616,7 @@ function ag_grade_submission () {
     if [[ -z "${SUBMISSION_HASH}" ]] ; then                 # Not Accepted prior to due-date
       _score=${_not_accepted}
       printf "\t Student accepted the assignment AFTER the due date\n\n"
-      printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "${_accepted}" "Accepted AFTER due date" >>${CLASS_GRADE_REPORT}
+      printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "Accepted AFTER due date" >>${CLASS_GRADE_REPORT}
       { 
         echo "Student accepted the assignment AFTER the due date"
         echo
@@ -630,7 +632,7 @@ function ag_grade_submission () {
     if [[ ${ACCEPT_HASH} == ${SUBMISSION_HASH} ]] ; then    # No work was done by the student.
       _score=${_only_accepted}
       printf "\t No activity by the student\n\n"
-      printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_only_accepted}" "${_accepted}" "Student only accepted the assignment" >>${CLASS_GRADE_REPORT}
+      printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_only_accepted}" "Student only accepted the assignment" >>${CLASS_GRADE_REPORT}
       { 
         echo "Student only accepted the assignment."
         echo
@@ -652,7 +654,7 @@ function ag_grade_submission () {
           printf "\nFinal Score $_student: 0\n\n" ;
         } > $terminal
 
-        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "${_accepted}" "Missing ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
+        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "Missing ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
         { 
           echo "Missing submission file: ${STUDENT_SUBMISSION_FILE}"
           echo
@@ -672,7 +674,7 @@ function ag_grade_submission () {
 
         _score=${_no_work}
         printf "\t No updates to ${STUDENT_SUBMISSION_FILE}\n"
-        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "${_accepted}" "No updates to ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
+        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "No updates to ${STUDENT_SUBMISSION_FILE}" >>${CLASS_GRADE_REPORT}
         { 
           echo "Submission file has not been updated: ${STUDENT_SUBMISSION_FILE}"
           echo
@@ -696,16 +698,20 @@ function ag_grade_submission () {
 
     # Validate that student successfully made a valid submission
     MAKEFILE=${GRADING_MAKEFILE} make -k -f ${GRADING_MAKEFILE} pregrade
-    if [[ $? != 0 ]] ; then
+    _retval="$?"
+    
+    if [[ -z ${IGNORE_PREGRADE} ]] && [[ $_retval != 0 ]] ; then
        _score=${_no_work}
        { 
           printf "\t Failed pregrade step\n\n"
           printf "\nFinal Score $_student: 0\n\n" ;
         } > $terminal
 
-        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}" "${_accepted}" "Failed pregrade test" >>${CLASS_GRADE_REPORT}
+        printf "%-20s: %3d\t# %s %s\n" "${_student}" "${_score}"  "Failed pregrade test" >>${CLASS_GRADE_REPORT}
         { 
           echo "Failed pregrade step (make pregrade): ${STUDENT_SUBMISSION_FILE}"
+          echo 
+          MAKEFILE=${GRADING_MAKEFILE} make -k -f ${GRADING_MAKEFILE} pregrade
           echo
           echo "ASSIGNMENT_${ASSIGNMENT_ID}_total=\"0\"        # ${_student}"
           echo
@@ -735,7 +741,7 @@ function ag_grade_submission () {
     } > $terminal
 
     # All is good to actual grade the assignment
-    make -f ${GRADING_MAKEFILE} grade
+    MAKEFILE=${GRADING_MAKEFILE} make -k -f ${GRADING_MAKEFILE} grade
     echo "Grading $_student"  > $terminal
     # Prompt the Professor for items related to the rubric
     {
@@ -774,7 +780,7 @@ function ag_grade_submission () {
 
 
     {
-      printf "%-20s: %3d\t# %s" ${_student} ${_score} ${_accepted}
+      printf "%-20s: %3d\t# %s" ${_student} ${_score}
       if [[ -z ${MINUTES_LATE} ]] ; then
         printf "\n" 
       else 
@@ -818,9 +824,14 @@ function reset_grading () {
   for _student in $(input_list "$@") ; do
     _dir=${SUBMISSION_DIR}/${ASSIGNMENT_NAME}-${_student}/
     if [[ -d "$_dir" ]] ; then 
-      git -C ${_dir} checkout main
-      git -C ${_dir} branch -d ${GRADING_BRANCH}
-      git -C ${_dir} tag -d ${SUBMISSION_TAG}
+      if [[ -f "${_dir}/${DID_NOT_ACCEPT_FILE}" ]] ; then
+        rm "${_dir}/${DID_NOT_ACCEPT_FILE}"
+        rmdir "${_dir}"
+      else
+        git -C ${_dir} checkout main
+        git -C ${_dir} branch -d ${GRADING_BRANCH}
+        git -C ${_dir} tag -d ${SUBMISSION_TAG}   # poorly named but correct
+      fi  
     fi
   done > /dev/null  2>&1
 }
@@ -860,13 +871,18 @@ function ag_pull_submission () {
    if [[ -d "${_dir}" ]] ; then 
      ( 
        cd "${_dir}"
-       git switch main >/dev/null 2>&1
-       git pull --no-edit
-       if [ $? == 0 ] ; then
-         echo "Pulled: ${_student}" 
-       else
-         echo "Error Pulling: ${_student}" 
-       fi > $terminal
+       git fetch
+       _branches=$(git branch --remote --format="%(refname:lstrip=3)" | grep -v HEAD)
+       for _b in $_branches ; do
+         git switch $_b
+         git merge --no-edit --ff-only origin/$_b
+         if [ $? == 0 ] ; then
+           echo "Pulled-${_b}: ${_student}" 
+         else
+           echo "Error Pulling-${b}: ${_student}" 
+         fi > $terminal
+       done
+       git switch main
        git pull --force --tags
      ) >/dev/null 2>> ${GRADING_LOG}
    fi
@@ -1055,7 +1071,7 @@ function ag_checkout_date () {
         echo "# Checkout Date: ${_date}"
         echo "# Checkout Hash: ${_hash}"
         echo "# Log Entries before checkout date:"
-        git switch ${_hash}  >/dev/null 2>&1
+        git switch --detach ${_hash}  >/dev/null 2>&1
         echo                              
 
         git log --decorate=full --oneline
@@ -1155,12 +1171,20 @@ function ag_show_commit_log () {
   if [[ -z "$DUE_DATE" ]] ; then
     DUE_DATE="$(date "+${AG_DATE_FORMAT}")"
   fi
-  
+  echo "BRANCHES:"
+  git branch --list | grep -v grading_information
+  echo
+
+  echo "TAGS:"
+  git tag --list | grep -v graded_version
+  echo
+
   echo "STUDENT COMMIT HISTORY:"
   echo
   git log --format=" %h %%%an%% %cd %d"  --date="format-local: ${AG_DATE_FORMAT}" \
           --graph  --after  "${DUE_DATE}" origin/main $(git tag) -- ${FILE_LIST} ':!README.md' |
-     grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
+     grep -v "%${GITHUB_PROF_NAME}%"     |
+     grep -v "%github-classroom\[bot\]%" | sed 's/ %.*%//'
 
   if [[ -z ${DUE_DATE} ]] ; then
     echo "* Now:      $(date "+${AG_DATE_FORMAT}")  ---------------"
@@ -1169,7 +1193,9 @@ function ag_show_commit_log () {
   fi
   git log --format=" %h %%%an%% %cd %d"  --date="format-local: ${AG_DATE_FORMAT}" \
           --graph  --before "${DUE_DATE}" origin/main $(git tag) -- ${FILE_LIST} ':!README.md' |
-     grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//'
+     grep -v "%${GITHUB_PROF_NAME}%"     |
+     grep -v "%github-classroom\[bot\]%" |
+     sed 's/ %.*%//'
   echo
 
   ## Two issues exist with the date formats.
@@ -1298,3 +1324,39 @@ function separate_students () {
 
 
 
+
+
+function time_spent () {
+  last=$(git log -1 '--format= %at' origin/main submitted --)
+  first=$(
+  git log '--format= %at %h %%%an%%' origin/main submitted --  |
+    grep -v '%Steve Fitzgerald%' |
+    grep -v '%github-classroom\[bot\]%'  |\
+    awk 'END { print $1}'
+  )
+  echo $(( (last - first) / 60 ))
+}
+
+
+
+# Error occurs if you commit grades multiple times'
+
+
+# Possible that when  you  commit grades, that there is a merge conflict
+# This is because the student made a change after grading was done
+
+# If your run clone submissions after a pregrade then
+
+  # $ clone_submissions 
+  # Previously Cloned -- pulling: 19alishia
+  # Pulled-main: 19alishia
+
+  # dwarf:~ steve$ cd classes/comp122/assignment-grading/30-quiz-digital-logic/submissions/30-quiz-digital-logic-19alishia
+  # dwarf:30-quiz-digital-logic-19alishia steve$ ls
+  # DID_NOT_ACCEPT_ASSIGNMENT
+  # dwarf:30-quiz-digital-logic-19alishia steve$ 19alishia
+
+  # This should 
+  # 1. remove the directory, and then clone
+  # 2. but .. what about the the pregrade request-- should it be ignored?
+  
