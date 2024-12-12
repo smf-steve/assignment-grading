@@ -51,11 +51,30 @@ TIMELIMIT_DUE_DATE=
 
 # Read git log
  git log --format="format:%h %ct %%%an%%" |
-     grep -v "%${GITHUB_PROF_NAME}%" | sed 's/ %.*%//' > .$$_full.log
+     grep -v "%${GITHUB_PROF_NAME}%"      |
+     sed -e 's/ %.*%//'                   \
+     > .$$_full.log
      # this strips out any commits done by the Prof.
 
+# Because github classroom forks from the repo now,
+# the first commit is when the original repo was built
+# We now don't have a way to determine when the student
+# has accepted the assignment.
+#
+# The best we can do--at this time--is to use the first
+# student commit.  
+#
+# This is problematic for timed events -- the students
+# can game the system.
+
 # Extract Accept/Last Info
-ACCEPT_INFO=( $(tail -1 .$$_full.log) )
+_number_commits=$(cat .$$_full.log | wc -l )
+if [[ $_number_commits == 1 ]] ; then
+   echo NO COMMITS
+   ACCEPT_INFO=( $(tail -1 .$$_full.log) )
+else
+   ACCEPT_INFO=( $(tail -2 .$$_full.log | head -1) )
+fi
 LAST_COMMIT_INFO=( $(head -1 .$$_full.log) ) 
 
 
