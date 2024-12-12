@@ -1,3 +1,12 @@
+Added IGNORE_PREGRADE=yes
+Grace_period can't have leading spaces
+
+
+
+When grading an MD, it runs the validate tests correct
+but the grading is done on HEAD, not "submitted"
+  -- this needs to be fixed in the makefile
+
 # ToDo:  Assignment Grading
 
 ## Questions:
